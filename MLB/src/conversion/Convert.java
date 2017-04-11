@@ -20,7 +20,7 @@ import dataaccesslayer.HibernateUtil;
 public class Convert {
 
 	static Connection conn;
-	static final String MYSQL_CONN_URL = "jdbc:mysql://192.168.6.131:3306/mlb?user=seth&password=password"; 
+	static final String MYSQL_CONN_URL = "jdbc:mysql://192.168.183.132/mlb?user=root&password=password"; 
 
 	public static void main(String[] args) {
 		try {
@@ -61,9 +61,9 @@ public class Convert {
 						"birthState, " + 
 						"debut, " + 
 						"finalGame " +
-						"from Master");
+						//"from Master");
 						// for debugging comment previous line, uncomment next line
-						//"from Master where playerID = 'bondsba01' or playerID = 'youklke01';");
+						"from Master where playerID = 'bondsba01' or playerID = 'youklke01';");
 			ResultSet rs = ps.executeQuery();
 			int count=0; // for progress feedback only
 			while (rs.next()) {

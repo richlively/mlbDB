@@ -6,8 +6,8 @@
 <hibernate-configuration>
 <session-factory>
 <property name="hibernate.connection.driver_class">com.microsoft.sqlserver.jdbc.SQLServerDriver</property>
-<property name="hibernate.connection.url">jdbc:sqlserver://192.168.6.130:1433;database=MLB</property>
-<property name="hibernate.connection.username">seth</property>
+<property name="hibernate.connection.url">jdbc:sqlserver://192.168.183.130:1433;database=MLB</property>
+<property name="hibernate.connection.username">root</property>
 <property name="hibernate.connection.password">password</property>
 <property name="hibernate.connection.pool_size">1</property>
 <property name="hibernate.default_catalog">dbo</property>
