@@ -20,7 +20,8 @@
 <mapping class="bo.BattingStats" />
 <mapping class="bo.CatchingStats" />
 <mapping class="bo.FieldingStats" />
-<mapping class="bo.PitchingStats" />
+<mapping class="bo.PitchingStats" /><mapping class="bo.Team" /><mapping
+		class="bo.TeamSeason" />
 </session-factory>
 </hibernate-configuration>
 
