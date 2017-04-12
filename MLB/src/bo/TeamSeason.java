@@ -84,7 +84,23 @@ public class TeamSeason implements Serializable {
 		this.id = psi;
 	}
 
+	/**
+	 * Adds a player
+	 * @param p
+	 */
+	public void addPlayer(Player p) {
+		players.add(p);
+	}
+
 	/*---------- begin getters and setters ----------*/
+
+	public Set<Player> getPlayers() {
+		return players;
+	}
+	
+	public void setPlayers(Set<Player> players) {
+		this.players = players;
+	}
 	
 	public TeamSeasonId getId() {
 		return id;
@@ -131,7 +147,8 @@ public class TeamSeason implements Serializable {
 	}
 
 	/**
-	 * Calculates the 
+	 * Calculates the
+	 * 
 	 * @return
 	 */
 	public Integer getTies() {
