@@ -120,7 +120,7 @@ public class PitchingStats implements Serializable{
 	
 	@Override
 	public boolean equals(Object obj) {
-		if(!(obj instanceof BattingStats)){
+		if(!(obj instanceof PitchingStats)){
 			return false;
 		}
 		PitchingStats other = (PitchingStats)obj;
