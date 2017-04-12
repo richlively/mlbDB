@@ -117,6 +117,110 @@ public class Convert {
 
 	}
 	
+	public static void convertTeams() {
+		try {
+			PreparedStatement ps = conn.prepareStatement("select " + 
+						"yearID, " + 
+						"lgID, " + 
+						"teamID, " + 
+						"frachID, "+ 
+						"divID, " + 
+						"Rank, " + 
+						"G, " + 
+						"Ghome, "+ 
+						"W, " + 
+						"L, " + 
+						"DivWin, " + 
+						"WCWin, " + 
+						"LgWin, " + 
+						"WSWin, " + 
+						"R, " + 
+						"AB, " +
+						"H, " +
+						"2B, " +
+						"3B, " +
+						"HR, " +
+						"BB, " +
+						"SO, " +
+						"SB, " +
+						"CS, " +
+						"HBP, " +
+						"SF, " +
+						"RA, " +
+						"ER, " +
+						"ERA, " +
+						"CG, " +
+						"SHO, " +
+						"SV, " +
+						"IPouts, " +
+						"HA, " +
+						"HRA, " +
+						"BBA, " +
+						"SOA, " +
+						"E, " +
+						"DP, " +
+						"FP, " +
+						"name, " +
+						"park, " +
+						"attendance, " +
+						"BPF, " +
+						"PPF, " +
+						"teamIDBR, " +
+						"AteamIdLahman45, " +
+						"teamIDretro "+
+						//"from Team");
+						// for debugging comment previous line, uncomment next line
+						"from Team where (yearID = 1871 and lgID = 'NA' and teamID = 'BS1') or ( yearID = 1871 and lgID = 'NA' and teamID = 'CH1') ;" );
+			ResultSet rs = ps.executeQuery();
+			int count=0; // for progress feedback only
+			while (rs.next()) {
+				count++;
+				// this just gives us some progress feedback
+				if (count % 500 == 0) System.out.println("num players: " + count);
+				String tid = rs.getString("teamID");
+				String name = rs.getString("name");
+				// this check is for data scrubbing
+				// don't want to bring anybody over that doesn't have a team ID or name
+				if (tid == null	|| tid.isEmpty() || 
+					name == null || name.isEmpty() ) continue;
+				// this far //
+				// TODO: Build Team class with appropriate get / set methods
+				
+				Player p = new Player();
+				p.setName(firstName + " " + lastName);
+				p.setGivenName(rs.getString("nameGiven"));
+				java.util.Date birthDay = convertIntsToDate(rs.getInt("birthYear"), rs.getInt("birthMonth"), rs.getInt("birthDay"));
+				if (birthDay!=null) p.setBirthDay(birthDay);
+				java.util.Date deathDay = convertIntsToDate(rs.getInt("deathYear"), rs.getInt("deathMonth"), rs.getInt("deathDay"));
+				if (deathDay!=null) p.setDeathDay(deathDay);
+				// need to do some data scrubbing for bats and throws columns
+				String hand = rs.getString("bats");
+				if (hand!=null && hand.equalsIgnoreCase("B")) {
+					hand = "S";
+				} 
+				p.setBattingHand(hand);
+				hand = rs.getString("throws");
+				p.setThrowingHand(hand);
+				p.setBirthCity(rs.getString("birthCity"));
+				p.setBirthState(rs.getString("birthState"));
+				java.util.Date firstGame = rs.getDate("debut");
+				if (firstGame!=null) p.setFirstGame(firstGame);
+				java.util.Date lastGame = rs.getDate("finalGame");
+				if (lastGame!=null) p.setLastGame(lastGame);
+				addPositions(p, pid);
+				// players bio collected, now go after stats
+				addSeasons(p, pid);
+				// we can now persist player, and the seasons and stats will cascade
+				HibernateUtil.persistPlayer(p);
+			}
+			rs.close();
+			ps.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+	
 	private static java.util.Date convertIntsToDate(int year, int month, int day) {
 		Calendar c = new GregorianCalendar();
 		java.util.Date d=null;
