@@ -1,6 +1,7 @@
 package bo;
 
 import java.io.Serializable;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -53,12 +54,128 @@ public class TeamSeason implements Serializable {
 		}
 	}
 
+	// creates the teamseasonplayer table, which is just a join table
 	@ManyToMany(fetch = FetchType.LAZY)
-	@JoinTable(name = "teamseasonplayer",
-			joinColumns = {
-					@JoinColumn(name = "teamId", insertable = false, updatable = false),
-					@JoinColumn(name = "year", insertable = false, updatable = false) },
-			inverseJoinColumns = {
+	@JoinTable(name = "teamseasonplayer", joinColumns = {
+			@JoinColumn(name = "teamId", insertable = false, updatable = false),
+			@JoinColumn(name = "year", insertable = false, updatable = false) }, inverseJoinColumns = {
 					@JoinColumn(name = "playerId", insertable = false, updatable = false) })
 	Set<Player> players = new HashSet<Player>();
+
+	@Column
+	Integer gamesPlayed;
+	@Column
+	Integer wins;
+	@Column
+	Integer losses;
+	@Column
+	Integer rank;
+	@Column
+	Integer totalAttendance;
+
+	// Hibernate needs a default constructor
+	public TeamSeason() {
+	}
+
+	public TeamSeason(Team t, Integer year) {
+		TeamSeasonId psi = new TeamSeasonId();
+		psi.team = t;
+		psi.teamYear = year;
+		this.id = psi;
+	}
+
+	/*---------- begin getters and setters ----------*/
+	
+	public TeamSeasonId getId() {
+		return id;
+	}
+
+	public Team getTeam() {
+		return id.team;
+	}
+
+	public void setTeam(Team team) {
+		this.id.team = team;
+	}
+
+	public Integer getYear() {
+		return id.teamYear;
+	}
+
+	public void setYear(Integer year) {
+		this.id.teamYear = year;
+	}
+
+	public Integer getGamesPlayed() {
+		return gamesPlayed;
+	}
+
+	public void setGamesPlayed(Integer gamesPlayed) {
+		this.gamesPlayed = gamesPlayed;
+	}
+
+	public Integer getWins() {
+		return wins;
+	}
+
+	public void setWins(Integer wins) {
+		this.wins = wins;
+	}
+
+	public Integer getLosses() {
+		return losses;
+	}
+
+	public void setLosses(Integer losses) {
+		this.losses = losses;
+	}
+
+	/**
+	 * Calculates the 
+	 * @return
+	 */
+	public Integer getTies() {
+		return this.getGamesPlayed() - this.getWins() - this.getLosses();
+	}
+
+	public Integer getRank() {
+		return rank;
+	}
+
+	public void setRank(Integer rank) {
+		this.rank = rank;
+	}
+
+	public Integer getTotalAttendance() {
+		return totalAttendance;
+	}
+
+	public void setTotalAttendance(Integer totalAttendance) {
+		this.totalAttendance = totalAttendance;
+	}
+	/*---------- end getters and setters ----------*/
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof TeamSeason)) {
+			return false;
+		}
+		TeamSeason other = (TeamSeason) obj;
+		return other.getId().equals(this.getId());
+	}
+
+	@Override
+	public int hashCode() {
+		return this.getId().hashCode();
+	}
+
+	public static Comparator<TeamSeason> teamSeasonsComparator = new Comparator<TeamSeason>() {
+
+		public int compare(TeamSeason ts1, TeamSeason ts2) {
+			Integer year1 = ts1.getYear();
+			Integer year2 = ts2.getYear();
+			return year1.compareTo(year2);
+		}
+
+	};
 }
