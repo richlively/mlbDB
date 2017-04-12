@@ -173,14 +173,15 @@ public class Convert {
 				count++;
 				// this just gives us some progress feedback
 				if (count % 500 == 0) System.out.println("num players: " + count);
-				String pid = rs.getString("playerID");
-				String firstName = rs.getString("nameFirst");
-				String lastName = rs.getString("nameLast");
+				String tid = rs.getString("teamID");
+				String name = rs.getString("name");
 				// this check is for data scrubbing
-				// don't want to bring anybody over that doesn't have a pid, firstname and lastname
-				if (pid == null	|| pid.isEmpty() || 
-					firstName == null || firstName.isEmpty() ||
-					lastName == null || lastName.isEmpty()) continue;
+				// don't want to bring anybody over that doesn't have a team ID or name
+				if (tid == null	|| tid.isEmpty() || 
+					name == null || name.isEmpty() ) continue;
+				// this far //
+				// TODO: Build Team class with appropriate get / set methods
+				
 				Player p = new Player();
 				p.setName(firstName + " " + lastName);
 				p.setGivenName(rs.getString("nameGiven"));
