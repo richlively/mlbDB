@@ -34,6 +34,7 @@ public class Convert {
 			//persist Players
 			//persist Teams
 			convertPlayers();
+			convertTeams();
 			long endTime = System.currentTimeMillis();
 			long elapsed = (endTime - startTime) / (1000*60);
 			System.out.println("Elapsed time in mins: " + elapsed);
@@ -126,7 +127,7 @@ public class Convert {
 						"yearID, " + 
 						"lgID, " + 
 						"teamID, " + 
-						"frachID, "+ 
+						"franchID, "+ 
 						"divID, " + 
 						"Rank, " + 
 						"G, " + 
@@ -169,11 +170,11 @@ public class Convert {
 						"BPF, " +
 						"PPF, " +
 						"teamIDBR, " +
-						"AteamIdLahman45, " +
+						"teamIdLahman45, " +
 						"teamIDretro "+
-						//"from Team");
+						//"from Teams");
 						// for debugging comment previous line, uncomment next line
-						"from Team where (yearID = 1871 and lgID = 'NA' and teamID = 'BS1') or ( yearID = 1871 and lgID = 'NA' and teamID = 'CH1') ;" );
+						"from Teams where (yearID = 1871 and lgID = 'NA' and teamID = 'BS1') or ( yearID = 1871 and lgID = 'NA' and teamID = 'CH1') ;" );
 			ResultSet rs = ps.executeQuery();
 			
 			int count=0; // for progress feedback only
@@ -192,14 +193,18 @@ public class Convert {
 				// this far //
 				
 				young_stmt.setString(1, tid);
+				ResultSet young_rs = young_stmt.executeQuery();
+				young_rs.next();
 				oldest_stmt.setString(1, tid);
+				ResultSet oldest_rs = oldest_stmt.executeQuery();
+				oldest_rs.next();
 				
 				Team t = new Team();
 				t.setName(name);
 				t.setLeague(rs.getString("lgID"));
-				// todo see how to get top result from statement set, how to set date with just yera
-				t.setYearFounded(convertIntsToDate(young_stmt.getInt(1), 1, 1));
-				t.setYearLast(convertIntsToDate(oldest_stmt.getInt(1),1,1));
+				// todo see how to get top result from statement set, how to set date with just year
+				t.setYearFounded(convertIntsToDate(young_rs.getInt("yearID"), 1, 1));
+				t.setYearLast(convertIntsToDate(oldest_rs.getInt("yearID"),1,1));
 				
 //				addTeamSeason(p, pid);
 //				// players bio collected, now go after stats
