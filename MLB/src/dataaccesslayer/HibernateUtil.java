@@ -10,6 +10,7 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 
 import bo.Player;
+import bo.Team;
 
 public class HibernateUtil {
 
@@ -93,6 +94,23 @@ public class HibernateUtil {
 		try {
 			tx.begin();
 			session.save(p);
+			tx.commit();
+		} catch (Exception e) {
+			tx.rollback();
+			e.printStackTrace();
+			return false;
+		} finally {
+			if (session.isOpen()) session.close();
+		}
+		return true;
+	}
+	
+	public static boolean persistTeam(Team t) {
+		Session session = HibernateUtil.getSessionFactory().openSession();
+		Transaction tx = session.getTransaction();
+		try {
+			tx.begin();
+			session.save(t);
 			tx.commit();
 		} catch (Exception e) {
 			tx.rollback();
