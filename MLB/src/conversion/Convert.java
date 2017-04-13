@@ -149,15 +149,13 @@ public class Convert {
 
 				// Should use store procedures, but don't have them so going
 				// back to prepared statements
-				// CallableStatement young_stmt = conn.prepareCall("{call
-				// youngest_year(?)}");
-				// CallableStatement oldest_stmt = conn.prepareCall("{call
-				// oldest_year(?)}");
+				 CallableStatement young_stmt = conn.prepareCall("{call youngest_year(?)}");
+				 CallableStatement oldest_stmt = conn.prepareCall("{call oldest_year(?)}");
 
 				String franchID = rs.getString("franchID");
 				String teamID = rs.getString("teamID");
 				String lgID = rs.getString("lgID");
-				String name;
+				String name, tid;
 				if (franchID != null) {
 					// Teams that change names still have the same franchID
 					// use franchID to figure out the most recent name
@@ -180,8 +178,8 @@ public class Convert {
 					name = rsRecent.getString("name");
 				}
 
-				String tid = rs.getString("teamID");
-				String name = rs.getString("name");
+				tid = rs.getString("teamID");
+				name = rs.getString("name");
 				// this check is for data scrubbing
 				// don't want to bring anybody over that doesn't have a team ID
 				// or name
@@ -201,8 +199,8 @@ public class Convert {
 				t.setLeague(rs.getString("lgID"));
 				// todo see how to get top result from statement set, how to set
 				// date with just year
-				t.setYearFounded(convertIntsToDate(young_rs.getInt("yearID"), 1, 1));
-				t.setYearLast(convertIntsToDate(oldest_rs.getInt("yearID"), 1, 1));
+				t.setYearFounded(convertYearToDate(young_rs.getInt("yearID")));
+				t.setYearLast(convertYearToDate(oldest_rs.getInt("yearID")));
 
 				// addTeamSeason(p, pid);
 				// // players bio collected, now go after stats
@@ -239,6 +237,37 @@ public class Convert {
 			d = c.getTime();
 		}
 		return d;
+	}
+
+	public static void addTeamSeason(Team t, String s) {
+
+		// gamesPlayed
+		// wins
+		// losses
+		// ties()
+		// rank
+		// totalAttendance
+                
+      		Set<String> positions = new HashSet<String>();
+                TeamSeason ts = new TeamSeason();
+		try {
+			PreparedStatement ps = conn.prepareStatement("SELECT " + "CG, W, L, Rank as R, Attendance as A " + "from Teams " + "where teamID = ? and lgID = ?;");
+			ps.setString(1, t.getId().toString());
+                        ps.setString(2, t.getLeague());
+			ResultSet rs = ps.executeQuery();
+			rs.next();
+                        
+                        ts.setGamesPlayed(rs.findColumn("CG"));
+                        ts.setWins(rs.findColumn("W"));
+                        ts.setLosses(rs.findColumn("L"));
+                        ts.setRank(rs.findColumn("R"));
+                        ts.setTotalAttendance(rs.findColumn("A"));
+                        
+			rs.close();
+			ps.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static void addPositions(Player p, String pid) {
