@@ -1,5 +1,6 @@
 package conversion;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -15,6 +16,8 @@ import bo.FieldingStats;
 import bo.PitchingStats;
 import bo.Player;
 import bo.PlayerSeason;
+import bo.Team;
+import bo.TeamSeason;
 import dataaccesslayer.HibernateUtil;
 
 public class Convert {
@@ -31,6 +34,7 @@ public class Convert {
 			//persist Players
 			//persist Teams
 			convertPlayers();
+			convertTeams();
 			long endTime = System.currentTimeMillis();
 			long elapsed = (endTime - startTime) / (1000*60);
 			System.out.println("Elapsed time in mins: " + elapsed);
@@ -123,7 +127,7 @@ public class Convert {
 						"yearID, " + 
 						"lgID, " + 
 						"teamID, " + 
-						"frachID, "+ 
+						"franchID, "+ 
 						"divID, " + 
 						"Rank, " + 
 						"G, " + 
@@ -166,17 +170,20 @@ public class Convert {
 						"BPF, " +
 						"PPF, " +
 						"teamIDBR, " +
-						"AteamIdLahman45, " +
+						"teamIdLahman45, " +
 						"teamIDretro "+
-						//"from Team");
+						//"from Teams");
 						// for debugging comment previous line, uncomment next line
-						"from Team where (yearID = 1871 and lgID = 'NA' and teamID = 'BS1') or ( yearID = 1871 and lgID = 'NA' and teamID = 'CH1') ;" );
+						"from Teams where (yearID = 1871 and lgID = 'NA' and teamID = 'BS1') or ( yearID = 1871 and lgID = 'NA' and teamID = 'CH1') ;" );
 			ResultSet rs = ps.executeQuery();
+			
 			int count=0; // for progress feedback only
 			while (rs.next()) {
+				CallableStatement young_stmt = conn.prepareCall("{call youngest_year(?)}");
+				CallableStatement oldest_stmt = conn.prepareCall("{call oldest_year(?)}");
 				count++;
 				// this just gives us some progress feedback
-				if (count % 500 == 0) System.out.println("num players: " + count);
+				if (count % 500 == 0) System.out.println("num teams: " + count);
 				String tid = rs.getString("teamID");
 				String name = rs.getString("name");
 				// this check is for data scrubbing
@@ -184,34 +191,26 @@ public class Convert {
 				if (tid == null	|| tid.isEmpty() || 
 					name == null || name.isEmpty() ) continue;
 				// this far //
-				// TODO: Build Team class with appropriate get / set methods
 				
-				Player p = new Player();
-				p.setName(firstName + " " + lastName);
-				p.setGivenName(rs.getString("nameGiven"));
-				java.util.Date birthDay = convertIntsToDate(rs.getInt("birthYear"), rs.getInt("birthMonth"), rs.getInt("birthDay"));
-				if (birthDay!=null) p.setBirthDay(birthDay);
-				java.util.Date deathDay = convertIntsToDate(rs.getInt("deathYear"), rs.getInt("deathMonth"), rs.getInt("deathDay"));
-				if (deathDay!=null) p.setDeathDay(deathDay);
-				// need to do some data scrubbing for bats and throws columns
-				String hand = rs.getString("bats");
-				if (hand!=null && hand.equalsIgnoreCase("B")) {
-					hand = "S";
-				} 
-				p.setBattingHand(hand);
-				hand = rs.getString("throws");
-				p.setThrowingHand(hand);
-				p.setBirthCity(rs.getString("birthCity"));
-				p.setBirthState(rs.getString("birthState"));
-				java.util.Date firstGame = rs.getDate("debut");
-				if (firstGame!=null) p.setFirstGame(firstGame);
-				java.util.Date lastGame = rs.getDate("finalGame");
-				if (lastGame!=null) p.setLastGame(lastGame);
-				addPositions(p, pid);
-				// players bio collected, now go after stats
-				addSeasons(p, pid);
-				// we can now persist player, and the seasons and stats will cascade
-				HibernateUtil.persistPlayer(p);
+				young_stmt.setString(1, tid);
+				ResultSet young_rs = young_stmt.executeQuery();
+				young_rs.next();
+				oldest_stmt.setString(1, tid);
+				ResultSet oldest_rs = oldest_stmt.executeQuery();
+				oldest_rs.next();
+				
+				Team t = new Team();
+				t.setName(name);
+				t.setLeague(rs.getString("lgID"));
+				// todo see how to get top result from statement set, how to set date with just year
+				t.setYearFounded(convertIntsToDate(young_rs.getInt("yearID"), 1, 1));
+				t.setYearLast(convertIntsToDate(oldest_rs.getInt("yearID"),1,1));
+				
+//				addTeamSeason(p, pid);
+//				// players bio collected, now go after stats
+//				addSeasons(p, pid);
+//				// we can now persist player, and the seasons and stats will cascade
+//				HibernateUtil.persistPlayer(p);
 			}
 			rs.close();
 			ps.close();
