@@ -26,6 +26,10 @@ public class Convert {
 		try {
 			long startTime = System.currentTimeMillis();
 			conn = DriverManager.getConnection(MYSQL_CONN_URL);
+			//convert Teams
+			//convert Players
+			//persist Players
+			//persist Teams
 			convertPlayers();
 			long endTime = System.currentTimeMillis();
 			long elapsed = (endTime - startTime) / (1000*60);
