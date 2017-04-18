@@ -241,12 +241,14 @@ public class Convert {
 
 	public static void addTeamSeason(Team t, String s) {
 
-		// gamesPlayed
-		// wins
-		// losses
-		// ties()
+		// games_played(teamID varchar(3), lgID varchar(2), yearID numeric(4))
+		// games_won(teamID varchar(3), lgID varchar(2), yearID numeric(4))
+		// games_lost(teamID varchar(3), lgID varchar(2), yearID numeric(4))
 		// rank
 		// totalAttendance
+		
+		// MySQL Stored Procedure Calls Avalible
+		// games_played(
                 
       		Set<String> positions = new HashSet<String>();
                 TeamSeason ts = new TeamSeason();
