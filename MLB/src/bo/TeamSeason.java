@@ -78,10 +78,10 @@ public class TeamSeason implements Serializable {
 	}
 
 	public TeamSeason(Team t, Integer year) {
-		TeamSeasonId psi = new TeamSeasonId();
-		psi.team = t;
-		psi.teamYear = year;
-		this.id = psi;
+		TeamSeasonId tsi = new TeamSeasonId();
+		tsi.team = t;
+		tsi.teamYear = year;
+		this.id = tsi;
 	}
 
 	/**

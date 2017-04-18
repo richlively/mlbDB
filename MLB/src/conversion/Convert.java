@@ -25,21 +25,24 @@ import dataaccesslayer.HibernateUtil;
 public class Convert {
 
 	static Connection conn;
-	// static final String MYSQL_CONN_URL =
-	// "jdbc:mysql://192.168.183.132/mlb?user=root&password=password";
-	static final String MYSQL_CONN_URL = "jdbc:mysql://192.168.133.129:3306/mlb?user=remote&password=password";
+	static final String MYSQL_CONN_URL =
+			//"jdbc:mysql://192.168.183.132/mlb?user=root&password=password"; //nathan's
+			"jdbc:mysql://192.168.133.129:3306/mlb?user=remote&password=password"; //richie's
 
-	HashMap<String, Team> teams = new HashMap<String, Team>();
-	Set<TeamSeason> teamseasons = new HashSet<TeamSeason>();
+	/**
+	 * Only store a single team object for each franchise
+	 * key - franchID
+	 * value - team object
+	 */
+	static HashMap<String, Team> teams = new HashMap<String, Team>();
 
 	public static void main(String[] args) {
 		try {
 			long startTime = System.currentTimeMillis();
 			conn = DriverManager.getConnection(MYSQL_CONN_URL);
 			// convert Teams
-			// convertTeams();
-			// convert Players
-			// persist Players
+			convertTeams();
+			// convert and persist Players
 			convertPlayers();
 			// persist Teams
 			persistTeams();
@@ -59,11 +62,9 @@ public class Convert {
 		HibernateUtil.getSessionFactory().close();
 	}
 
-	private static void persistTeams() {
-		// TODO Auto-generated method stub
-
-	}
-
+	/**
+	 * Converts the "Master" table to Player objects
+	 */
 	public static void convertPlayers() {
 		try {
 			PreparedStatement ps = conn.prepareStatement(
@@ -132,9 +133,12 @@ public class Convert {
 
 	}
 
+	/**
+	 * Converts the "Teams" table to Team objects
+	 */
 	public static void convertTeams() {
 		try {
-			PreparedStatement ps = conn.prepareStatement("select " + "teamID, " + "yearID, " + "lgID, " + "franchID, " + "name " +
+			PreparedStatement ps = conn.prepareStatement("select " + "teamID, " + "yearID, " + "lgID, " + "franchID, "+ "name " +
 			// "from Teams");
 			// for debugging comment previous line, uncomment next line
 					"from Teams where (yearID = 1871 and lgID = 'NA' and teamID = 'BS1') or ( yearID = 1871 and lgID = 'NA' and teamID = 'CH1');");
@@ -147,76 +151,83 @@ public class Convert {
 				if (count % 500 == 0)
 					System.out.println("num teams: " + count);
 
-				// Should use store procedures, but don't have them so going
-				// back to prepared statements
-				 CallableStatement young_stmt = conn.prepareCall("{call youngest_year(?)}");
-				 CallableStatement oldest_stmt = conn.prepareCall("{call oldest_year(?)}");
 
-				String franchID = rs.getString("franchID");
 				String teamID = rs.getString("teamID");
 				String lgID = rs.getString("lgID");
-				String name, tid;
-				if (franchID != null) {
-					// Teams that change names still have the same franchID
-					// use franchID to figure out the most recent name
-					PreparedStatement psFranch = conn.prepareStatement(
-							"select name" + "from Teams" + "where franchID=?" + "order by year_ID desc" + "limit 1");
-					psFranch.setString(1, franchID);
-					ResultSet rsFranch = psFranch.executeQuery();
-					rsFranch.next();
-					name = rsFranch.getString("name");
-				}
-				else {
-					// In the unlikely event there is no franchise id, use the most recent name
-					PreparedStatement psRecent = conn.prepareStatement(
-							"select name" + "from Teams" + "where teamID=? and lgID=?" + "order by year_ID desc" + "limit 1");
+				Integer year = rs.getInt("yearID");
+				/*
+				 * because this is a one-time use convert program, our data shows that every team (even teams that lasted only one year)
+				 * has a non-null franchID so no reason to check if it is null
+				 * (i.e. even though the DB schema does allow null franchises, they do not occur in this instance)
+				 * also, this is the only feasible way to keep track of when a team changes its name
+				 * since the teamID also changes when the name changes
+				*/
+				String franchID = rs.getString("franchID");
+				//only create and add the team if we haven't already added it
+				if (!teams.containsKey(franchID)) {
+					String name;
+					//the latest/last name used by the team is easily looked up in the TeamFranchises table
+					CallableStatement latestName_stmt = conn.prepareCall("{call latest_name(?)}");
+					latestName_stmt.setString(1, franchID);
+					ResultSet latestName_rs = latestName_stmt.executeQuery();
+					//only one row per franchise
+					latestName_rs.next();
+					name = latestName_rs.getString("name");
 					
-					psRecent.setString(1, teamID);
-					psRecent.setString(2, lgID);
-					ResultSet rsRecent = psRecent.executeQuery();
-					rsRecent.next();
-					name = rsRecent.getString("name");
+					//find the founding and most recent years for the team
+					CallableStatement years_stmt = conn.prepareCall("{call team_years(?)}");
+					
+					years_stmt.setString(1, teamID);
+					ResultSet years_rs = years_stmt.executeQuery();
+					
+					//dates descending, so most recent year is first, oldest is last
+					years_rs.first();
+					Date recent = convertYearToDate(years_rs.getInt("yearID"));
+					years_rs.last();
+					Date founded = convertYearToDate(years_rs.getInt("yearsID"));
+
+					Team t = new Team();
+					t.setName(name);
+					t.setLeague(lgID);
+					t.setYearLast(recent);
+					t.setYearFounded(founded);
+					
+					addTeamSeason(t, year, lgID, teamID);
+					
+					teams.put(franchID, t);
+					
+					latestName_rs.close();
+					years_rs.close();
 				}
-
-				tid = rs.getString("teamID");
-				name = rs.getString("name");
-				// this check is for data scrubbing
-				// don't want to bring anybody over that doesn't have a team ID
-				// or name
-				if (tid == null || tid.isEmpty() || name == null || name.isEmpty())
-					continue;
-				// this far //
-
-				young_stmt.setString(1, tid);
-				ResultSet young_rs = young_stmt.executeQuery();
-				young_rs.next();
-				oldest_stmt.setString(1, tid);
-				ResultSet oldest_rs = oldest_stmt.executeQuery();
-				oldest_rs.next();
-
-				Team t = new Team();
-				t.setName(name);
-				t.setLeague(rs.getString("lgID"));
-				// todo see how to get top result from statement set, how to set
-				// date with just year
-				t.setYearFounded(convertYearToDate(young_rs.getInt("yearID")));
-				t.setYearLast(convertYearToDate(oldest_rs.getInt("yearID")));
-
-				// addTeamSeason(p, pid);
-				// // players bio collected, now go after stats
-				// addSeasons(p, pid);
-				// // we can now persist player, and the seasons and stats will
-				// cascade
-				// HibernateUtil.persistPlayer(p);
+				//this team has already been created, so just add on the season
+				else {
+					Team t = teams.get(franchID);
+					addTeamSeason(t, year, lgID, teamID);
+				}
 			}
 			rs.close();
 			ps.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+	}
+	
+	/**
+	 * Persists every team object
+	 */
+	private static void persistTeams() {
+		for(Team t : teams.values()) {
+			HibernateUtil.persistTeam(t);
+		}
 	}
 
+	/**
+	 * Converts three integers into a Date object
+	 * @param year
+	 * @param month
+	 * @param day
+	 * @return the date
+	 */
 	private static java.util.Date convertIntsToDate(int year, int month, int day) {
 		Calendar c = new GregorianCalendar();
 		java.util.Date d = null;
@@ -228,7 +239,12 @@ public class Convert {
 		return d;
 	}
 	
-	private static Date convertYearToDate(int year) {
+	/**
+	 * Converts an integer into a Date object
+	 * @param year
+	 * @return the date
+	 */
+	private static java.util.Date convertYearToDate(int year) {
 		Calendar c = new GregorianCalendar();
 		Date d = null;
 		// if year is 0, then date wasn't populated in MySQL database
@@ -239,35 +255,37 @@ public class Convert {
 		return d;
 	}
 
-	public static void addTeamSeason(Team t, Integer yr, String s) {
-
-		// games_played(teamID varchar(3), lgID varchar(2), yearID numeric(4))
-		// games_won(teamID varchar(3), lgID varchar(2), yearID numeric(4))
-		// games_lost(teamID varchar(3), lgID varchar(2), yearID numeric(4))
-		// rank
-		// totalAttendance
-		
-                // I didn't realize you had implemented this, so I almost completly redid it in procedure calls.
-                // I've put my code at the bottom, in case we go for the EC
-                
-      		Set<String> positions = new HashSet<String>();
-                TeamSeason ts = new TeamSeason();
+	/**
+	 * Adds season data to a team
+	 * @param t the team
+	 * @param yearID the year
+	 * @param lgID the league ID
+	 * @param teamID the team ID
+	 */
+	public static void addTeamSeason(Team t, Integer yearID, String lgID, String teamID) {
 		try {
-			PreparedStatement ps = conn.prepareStatement("SELECT " + "CG, W, L, Rank as R, Attendance as A " + "from Teams " + "where teamID = ? and lgID = ? and yearID = ?;");
-			ps.setString(1, t.getId().toString());
-                        ps.setString(2, t.getLeague());
-                        ps.setString(3, yr.toString());
-			ResultSet rs = ps.executeQuery();
-			rs.next();
-                        
-                        ts.setGamesPlayed(rs.findColumn("CG"));
-                        ts.setWins(rs.findColumn("W"));
-                        ts.setLosses(rs.findColumn("L"));
-                        ts.setRank(rs.findColumn("R"));
-                        ts.setTotalAttendance(rs.findColumn("A"));
-                        
-			rs.close();
-			ps.close();
+			CallableStatement teamStats_stmt = conn.prepareCall("{call team_stats(?,?,?)}");
+			teamStats_stmt.setInt(1, yearID);
+			teamStats_stmt.setString(2, lgID);
+			teamStats_stmt.setString(3, teamID);
+			ResultSet teamStats_rs = teamStats_stmt.executeQuery();
+			//only one row (a team can only have one season in a year)
+			teamStats_rs.next();
+			
+			Integer rank = teamStats_rs.getInt("Rank");
+			Integer games = teamStats_rs.getInt("G");
+			Integer wins = teamStats_rs.getInt("W");
+			Integer losses = teamStats_rs.getInt("L");
+			Integer attendance = teamStats_rs.getInt("attendance");
+			
+			TeamSeason ts = new TeamSeason(t, yearID);
+			ts.setRank(rank);
+			ts.setGamesPlayed(games);
+			ts.setWins(wins);
+			ts.setLosses(losses);
+			ts.setTotalAttendance(attendance);
+			
+			teamStats_rs.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -292,6 +310,11 @@ public class Convert {
 		p.setPositions(positions);
 	}
 
+	/**
+	 * Adds season statistics to a player
+	 * @param p the player
+	 * @param pid player ID
+	 */
 	public static void addSeasons(Player p, String pid) {
 		try {
 			PreparedStatement ps = conn
@@ -335,6 +358,12 @@ public class Convert {
 
 	}
 
+	/**
+	 * Gets a player's salary for the year
+	 * @param pid player ID
+	 * @param yid the year
+	 * @return the salary
+	 */
 	public static double getSalary(String pid, Integer yid) {
 		double salary = 0;
 		try {
@@ -354,6 +383,13 @@ public class Convert {
 		return salary;
 	}
 
+	/**
+	 * Gets a player's seasonal batting stats
+	 * @param psi
+	 * @param pid
+	 * @param yid
+	 * @return the batting stats
+	 */
 	public static BattingStats getBatting(PlayerSeason psi, String pid, Integer yid) {
 		BattingStats s = new BattingStats();
 		try {
@@ -388,6 +424,13 @@ public class Convert {
 		return s;
 	}
 
+	/**
+	 * Gets a player's seasonal fielding stats
+	 * @param psi
+	 * @param pid
+	 * @param yid
+	 * @return the fielding stats
+	 */
 	public static FieldingStats getFielding(PlayerSeason psi, String pid, Integer yid) {
 		FieldingStats s = new FieldingStats();
 		try {
@@ -409,6 +452,13 @@ public class Convert {
 		return s;
 	}
 
+	/**
+	 * Gets a player's seasonal pitching stats
+	 * @param psi
+	 * @param pid
+	 * @param yid
+	 * @return the pitching stats
+	 */
 	public static PitchingStats getPitching(PlayerSeason psi, String pid, Integer yid) {
 		PitchingStats s = new PitchingStats();
 		try {
@@ -442,6 +492,13 @@ public class Convert {
 		return s;
 	}
 
+	/**
+	 * Gets a player's seasonal catching stats
+	 * @param psi
+	 * @param pid
+	 * @param yid
+	 * @return the catching stats
+	 */
 	public static CatchingStats getCatching(PlayerSeason psi, String pid, Integer yid) {
 		CatchingStats s = new CatchingStats();
 		PreparedStatement ps = null;
@@ -517,86 +574,46 @@ public class Convert {
 * 
 *
 * DELIMITER //
-* CREATE PROCEDURE oldest_year
-* (IN tid varchar(3), lid varchar(2))
+* CREATE PROCEDURE team_years
+* (IN fid varchar(3))
 * BEGIN
 *   SELECT yearID
 *   FROM Teams t
 *   WHERE
-*   t.teamID = tid AND
-*   t.lgID = lid
-*	ORDER BY yearID;
-* END //
-* DELIMITER ;
-*
-*
-* DELIMITER //
-* CREATE PROCEDURE youngest_year
-* (IN tid varchar(3), lid varchar(2))
-* BEGIN
-*   SELECT yearID
-*   FROM Teams t
-*   WHERE
-*   t.teamID = tid AND
-*   t.lgID = lid
+*   t.franchID = fid
 *	ORDER BY yearID desc;
 * END //
 * DELIMITER ;
 * 
+* 
+* DELIMITER //
+* CREATE PROCEDURE latest_name
+* (IN fid varchar(3))
+* BEGIN
+*   SELECT franchName
+*   FROM TeamsFranchises ft
+*   WHERE
+*   ft.franchID = fid;
+* END //
+* DELIMITER ;
+* 
+* DELIMITER //
+* CREATE PROCEDURE team_stats
+* (IN yid int(11), lid varchar(2), tid varchar(3))
+* BEGIN
+* 	SELECT
+* 		Rank,
+* 		G,
+* 		W,
+* 		L,
+* 		attendance
+* 	FROM
+* 		Teams t
+* 	WHERE
+* 		t.yearID = yid AND
+* 		t.lgID = lid AND
+* 		t.teamID = tid;
+* END //
+* DELIMITER ;
+* 		
 */
-
-
-
-// public static void addTeamSeason(Team t, String tid, String lid, Integer yr) {
-
-//             // games_played(teamID varchar(3), lgID varchar(2), yearID numeric(4))
-//             // games_won(teamID varchar(3), lgID varchar(2), yearID numeric(4))
-//             // games_lost(teamID varchar(3), lgID varchar(2), yearID numeric(4))
-//             // rank
-//             // totalAttendance
-
-//             // MySQL Stored Procedure Calls Avalible
-//             // games_played(
-//             Set<String> positions = new HashSet<String>();
-//             TeamSeason ts = new TeamSeason();
-
-//             try{
-//                 ResultSet prs, wrs, lrs;
-//                 CallableStatement played_stmt = conn.prepareCall("{call games_played(?, ?, ?)}");
-//                 CallableStatement won_stmt = conn.prepareCall("{call games_won(?, ?, ?)}");
-//                 CallableStatement lost_stmt = conn.prepareCall("{call games_lost(?, ?, ?)}");
-
-//                 played_stmt.setString(1, tid);
-//                 played_stmt.setString(2, lid);
-//                 played_stmt.setString(3, yr.toString());
-//                 prs = played_stmt.executeQuery();
-//                 prs.next();
-
-//                 won_stmt.setString(1, tid);
-//                 won_stmt.setString(2, lid);
-//                 won_stmt.setString(3, yr.toString());
-//                 wrs = won_stmt.executeQuery();
-//                 wrs.next();
-                
-//                 lost_stmt.setString(1, tid);
-//                 lost_stmt.setString(2, lid);
-//                 lost_stmt.setString(3, yr.toString());
-//                 lrs = lost_stmt.executeQuery();
-//                 lrs.next();
-                
-//                 ts.setGamesPlayed(prs.getInt(1));
-//                 ts.setWins(wrs.getInt(1));
-//                 ts.setLosses(lrs.getInt(1));
-
-//                 ts.setGamesPlayed(rs.findColumn("CG"));
-//                 ts.setWins(rs.findColumn("W"));
-//                 ts.setLosses(rs.findColumn("L"));
-//                 ts.setRank(rs.findColumn("R"));
-//                 ts.setTotalAttendance(rs.findColumn("A"));
-
-//                 rs.close();
-//                 ps.close();
-//             } catch (Exception e) {
-//                     e.printStackTrace();
-//             }
-// 	}
