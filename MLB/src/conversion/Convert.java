@@ -569,20 +569,13 @@ public class Convert {
 /*
  * Stored procedure calls
  * 
- *
- * DELIMITER // CREATE PROCEDURE games_played (IN tid varchar(3), lid
- * varchar(2), yr numeric(4)) BEGIN SELECT SUM(CG) FROM Teams t WHERE t.teamID =
- * tid AND t.lgID = lid AND t.yearID = yr; END // DELIMITER ;
+ * DELIMITER // CREATE PROCEDURE players () BEGIN select
+ * playerID,nameFirst,nameLast,nameGiven,birthDay,birthMonth,birthYear,deathDay,
+ * deathMonth,deathYear,bats, throws,birthCity,birthState,debut,finalGame from
+ * Master; END // DELIMITER ;
  * 
- *
- * DELIMITER // CREATE PROCEDURE games_won (IN tid varchar(3), lid varchar(2),
- * yr numeric(4)) BEGIN SELECT SUM(W) FROM Teams t WHERE t.teamID = tid AND
- * t.lgID = lid AND t.yearID = yr; END // DELIMITER ;
- *
- *
- * DELIMITER // CREATE PROCEDURE games_lost (IN tid varchar(3), lid varchar(2),
- * yr numeric(4)) BEGIN SELECT SUM(L) FROM Teams t WHERE t.teamID = tid AND
- * t.lgID = lid AND t.yearID = yr; END // DELIMITER ;
+ * DELIMITER // CREATE PROCEDURE teams () BEGIN SELECT teamID, yearID, lgID,
+ * franchID, name FROM Teams t; END // DELIMITER ;
  * 
  *
  * DELIMITER // CREATE PROCEDURE team_years (IN fid varchar(3)) BEGIN SELECT
