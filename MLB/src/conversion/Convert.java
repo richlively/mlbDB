@@ -190,9 +190,9 @@ public class Convert {
 					// dates descending, so most recent year is first, oldest is
 					// last
 					years_rs.first();
-					Date recent = convertYearToDate(years_rs.getInt("yearID"));
+					Integer recent = years_rs.getInt("yearID");
 					years_rs.last();
-					Date founded = convertYearToDate(years_rs.getInt("yearID"));
+					Integer founded = years_rs.getInt("yearID");
 
 					Team t = new Team();
 					t.setName(name);
@@ -257,7 +257,7 @@ public class Convert {
 	 * 
 	 * @param year
 	 * @return the date
-	 */
+	 *//*
 	private static java.util.Date convertYearToDate(int year) {
 		Calendar c = new GregorianCalendar();
 		Date d = null;
@@ -267,7 +267,7 @@ public class Convert {
 			d = c.getTime();
 		}
 		return d;
-	}
+	}*/
 
 	/**
 	 * Adds season data to a team
