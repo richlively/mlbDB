@@ -569,11 +569,14 @@ public class Convert {
  * BEGIN 
  * 	SELECT
  * 		playerID,nameFirst,nameLast,nameGiven,birthDay,birthMonth,birthYear,deathDay,
- * 		deathMonth,deathYear,bats, throws,birthCity,birthState,debut,finalGame
+ * 		deathMonth,deathYear,bats,throws,birthCity,birthState,debut,finalGame
  * 	FROM
  * 		Master; 
  * END // 
  * DELIMITER ;
+ * 
+ * TODO need stored procedure calls for addPositions, addSeasons, and each of the getStats
+ * TODO change above functions to use said procedure calls
  * 
  * DELIMITER // 
  * CREATE PROCEDURE teams () 
