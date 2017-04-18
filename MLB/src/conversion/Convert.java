@@ -26,15 +26,19 @@ public class Convert {
 
 	static Connection conn;
 	static final String MYSQL_CONN_URL =
-			//"jdbc:mysql://192.168.183.132/mlb?user=root&password=password"; //nathan's
-			"jdbc:mysql://192.168.133.129:3306/mlb?user=remote&password=password&noAccessToProcedureBodies=true"; //richie's
+			// "jdbc:mysql://192.168.183.132/mlb?user=root&password=password";
+			// //nathan's
+			"jdbc:mysql://192.168.133.129:3306/mlb?user=remote&password=password&noAccessToProcedureBodies=true"; // richie's
 
 	/**
-	 * Only store a single team object for each franchise
-	 * key - franchID
-	 * value - team object
+	 * Only store a single team object for each franchise key - franchID value -
+	 * team object
 	 */
 	static HashMap<String, Team> teams = new HashMap<String, Team>();
+	/**
+	 * key - lgID + teamID value - teamSeason object
+	 */
+	static HashMap<String, TeamSeason> teamSeasons = new HashMap<String, TeamSeason>();
 
 	public static void main(String[] args) {
 		try {
@@ -70,17 +74,17 @@ public class Convert {
 			PreparedStatement ps = conn.prepareStatement(
 					"select " + "playerID, " + "nameFirst, " + "nameLast, " + "nameGiven, " + "birthDay, "
 							+ "birthMonth, " + "birthYear, " + "deathDay, " + "deathMonth, " + "deathYear, " + "bats, "
-							+ "throws, " + "birthCity, " + "birthState, " + "debut, " + "finalGame " +
-							// "from Master");
-							// for debugging comment previous line, uncomment
-							// next line
-							"from Master where playerID = 'bondsba01' or playerID = 'youklke01';");
+							+ "throws, " + "birthCity, " + "birthState, " + "debut, " + "finalGame " + "from Master");
+			// for debugging comment previous line, uncomment
+			// next line
+			// "from Master where playerID = 'bondsba01' or playerID =
+			// 'youklke01';");
 			ResultSet rs = ps.executeQuery();
 			int count = 0; // for progress feedback only
 			while (rs.next()) {
 				count++;
 				// this just gives us some progress feedback
-				if (count % 1000 == 0)
+				if (count % 100 == 0)
 					System.out.println("num players: " + count);
 				String pid = rs.getString("playerID");
 				String firstName = rs.getString("nameFirst");
@@ -138,10 +142,11 @@ public class Convert {
 	 */
 	public static void convertTeams() {
 		try {
-			PreparedStatement ps = conn.prepareStatement("select " + "teamID, " + "yearID, " + "lgID, " + "franchID, "+ "name " +
-			// "from Teams");
+			PreparedStatement ps = conn.prepareStatement(
+					"select " + "teamID, " + "yearID, " + "lgID, " + "franchID, " + "name " + "from Teams");
 			// for debugging comment previous line, uncomment next line
-					"from Teams where (yearID = 1871 and lgID = 'NA' and teamID = 'BS1') or ( yearID = 1871 and lgID = 'NA' and teamID = 'CH1');");
+			// "from Teams where (yearID = 1871 and lgID = 'NA' and teamID =
+			// 'BS1') or ( yearID = 1871 and lgID = 'NA' and teamID = 'CH1');");
 			ResultSet rs = ps.executeQuery();
 
 			int count = 0; // for progress feedback only
@@ -151,36 +156,39 @@ public class Convert {
 				if (count % 500 == 0)
 					System.out.println("num teams: " + count);
 
-
 				String teamID = rs.getString("teamID");
 				String lgID = rs.getString("lgID");
 				Integer year = rs.getInt("yearID");
 				/*
-				 * because this is a one-time use convert program, our data shows that every team (even teams that lasted only one year)
+				 * because this is a one-time use convert program, our data
+				 * shows that every team (even teams that lasted only one year)
 				 * has a non-null franchID so no reason to check if it is null
-				 * (i.e. even though the DB schema does allow null franchises, they do not occur in this instance)
-				 * also, this is the only feasible way to keep track of when a team changes its name
+				 * (i.e. even though the DB schema does allow null franchises,
+				 * they do not occur in this instance) also, this is the only
+				 * feasible way to keep track of when a team changes its name
 				 * since the teamID also changes when the name changes
-				*/
+				 */
 				String franchID = rs.getString("franchID");
-				//only create and add the team if we haven't already added it
+				// only create and add the team if we haven't already added it
 				if (!teams.containsKey(franchID)) {
 					String name;
-					//the latest/last name used by the team is easily looked up in the TeamFranchises table
+					// the latest/last name used by the team is easily looked up
+					// in the TeamFranchises table
 					CallableStatement latestName_stmt = conn.prepareCall("{call latest_name(?)}");
 					latestName_stmt.setString(1, franchID);
 					ResultSet latestName_rs = latestName_stmt.executeQuery();
-					//only one row per franchise
+					// only one row per franchise
 					latestName_rs.next();
 					name = latestName_rs.getString("franchName");
-					
-					//find the founding and most recent years for the team
+
+					// find the founding and most recent years for the team
 					CallableStatement years_stmt = conn.prepareCall("{call team_years(?)}");
-					
+
 					years_stmt.setString(1, franchID);
 					ResultSet years_rs = years_stmt.executeQuery();
-					
-					//dates descending, so most recent year is first, oldest is last
+
+					// dates descending, so most recent year is first, oldest is
+					// last
 					years_rs.first();
 					Date recent = convertYearToDate(years_rs.getInt("yearID"));
 					years_rs.last();
@@ -191,15 +199,15 @@ public class Convert {
 					t.setLeague(lgID);
 					t.setYearLast(recent);
 					t.setYearFounded(founded);
-					
+
 					addTeamSeason(t, year, lgID, teamID);
-					
+
 					teams.put(franchID, t);
-					
+
 					latestName_rs.close();
 					years_rs.close();
 				}
-				//this team has already been created, so just add on the season
+				// this team has already been created, so just add on the season
 				else {
 					Team t = teams.get(franchID);
 					addTeamSeason(t, year, lgID, teamID);
@@ -211,18 +219,23 @@ public class Convert {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Persists every team object
 	 */
 	private static void persistTeams() {
-		for(Team t : teams.values()) {
+		int count = 0;
+		for (Team t : teams.values()) {
 			HibernateUtil.persistTeam(t);
+			if (++count % 100 == 0) {
+				System.out.println("num teams persisted: " + count);
+			}
 		}
 	}
 
 	/**
 	 * Converts three integers into a Date object
+	 * 
 	 * @param year
 	 * @param month
 	 * @param day
@@ -238,9 +251,10 @@ public class Convert {
 		}
 		return d;
 	}
-	
+
 	/**
 	 * Converts an integer into a Date object
+	 * 
 	 * @param year
 	 * @return the date
 	 */
@@ -257,10 +271,15 @@ public class Convert {
 
 	/**
 	 * Adds season data to a team
-	 * @param t the team
-	 * @param yearID the year
-	 * @param lgID the league ID
-	 * @param teamID the team ID
+	 * 
+	 * @param t
+	 *            the team
+	 * @param yearID
+	 *            the year
+	 * @param lgID
+	 *            the league ID
+	 * @param teamID
+	 *            the team ID
 	 */
 	public static void addTeamSeason(Team t, Integer yearID, String lgID, String teamID) {
 		try {
@@ -269,24 +288,25 @@ public class Convert {
 			teamStats_stmt.setString(2, lgID);
 			teamStats_stmt.setString(3, teamID);
 			ResultSet teamStats_rs = teamStats_stmt.executeQuery();
-			//only one row (a team can only have one season in a year)
+			// only one row (a team can only have one season in a year)
 			teamStats_rs.next();
-			
+
 			Integer rank = teamStats_rs.getInt("Rank");
 			Integer games = teamStats_rs.getInt("G");
 			Integer wins = teamStats_rs.getInt("W");
 			Integer losses = teamStats_rs.getInt("L");
 			Integer attendance = teamStats_rs.getInt("attendance");
-			
+
 			TeamSeason ts = new TeamSeason(t, yearID);
 			ts.setRank(rank);
 			ts.setGamesPlayed(games);
 			ts.setWins(wins);
 			ts.setLosses(losses);
 			ts.setTotalAttendance(attendance);
-			
+
 			t.addSeason(ts);
-			
+			teamSeasons.put(lgID + teamID, ts);
+
 			teamStats_rs.close();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -314,8 +334,11 @@ public class Convert {
 
 	/**
 	 * Adds season statistics to a player
-	 * @param p the player
-	 * @param pid player ID
+	 * 
+	 * @param p
+	 *            the player
+	 * @param pid
+	 *            player ID
 	 */
 	public static void addSeasons(Player p, String pid) {
 		try {
@@ -328,6 +351,13 @@ public class Convert {
 			while (rs.next()) {
 				int yid = rs.getInt("yearID");
 				s = p.getPlayerSeason(yid);
+				// regardless of the circumstances, add the player to the team
+				// season as well
+				String leagueID = rs.getString("lgId");
+				String teamID = rs.getString("teamID");
+				TeamSeason ts = teamSeasons.get(leagueID + teamID);
+				ts.addPlayer(p);
+
 				// it is possible to see more than one of these per player if he
 				// switched teams
 				// set all of these attrs the first time we see this
@@ -362,8 +392,11 @@ public class Convert {
 
 	/**
 	 * Gets a player's salary for the year
-	 * @param pid player ID
-	 * @param yid the year
+	 * 
+	 * @param pid
+	 *            player ID
+	 * @param yid
+	 *            the year
 	 * @return the salary
 	 */
 	public static double getSalary(String pid, Integer yid) {
@@ -387,6 +420,7 @@ public class Convert {
 
 	/**
 	 * Gets a player's seasonal batting stats
+	 * 
 	 * @param psi
 	 * @param pid
 	 * @param yid
@@ -428,6 +462,7 @@ public class Convert {
 
 	/**
 	 * Gets a player's seasonal fielding stats
+	 * 
 	 * @param psi
 	 * @param pid
 	 * @param yid
@@ -456,6 +491,7 @@ public class Convert {
 
 	/**
 	 * Gets a player's seasonal pitching stats
+	 * 
 	 * @param psi
 	 * @param pid
 	 * @param yid
@@ -496,6 +532,7 @@ public class Convert {
 
 	/**
 	 * Gets a player's seasonal catching stats
+	 * 
 	 * @param psi
 	 * @param pid
 	 * @param yid
@@ -530,92 +567,35 @@ public class Convert {
 }
 
 /*
-* Stored procedure calls
-* 
-*
-* DELIMITER //
-* CREATE PROCEDURE games_played
-* (IN tid varchar(3), lid varchar(2), yr numeric(4))
-* BEGIN
-*   SELECT SUM(CG)
-*   FROM Teams t
-*   WHERE
-*   t.teamID = tid AND
-*   t.lgID = lid AND
-*	t.yearID = yr;
-* END //
-* DELIMITER ;
-* 
-*
-* DELIMITER //
-* CREATE PROCEDURE games_won
-* (IN tid varchar(3), lid varchar(2), yr numeric(4))
-* BEGIN
-*   SELECT SUM(W)
-*   FROM Teams t
-*   WHERE
-*   t.teamID = tid AND
-*   t.lgID = lid AND
-*	t.yearID = yr;
-* END //
-* DELIMITER ;
-*
-*
-* DELIMITER //
-* CREATE PROCEDURE games_lost
-* (IN tid varchar(3), lid varchar(2), yr numeric(4))
-* BEGIN
-*   SELECT SUM(L)
-*   FROM Teams t
-*   WHERE
-*   t.teamID = tid AND
-*   t.lgID = lid AND
-*	t.yearID = yr;
-* END //
-* DELIMITER ;
-* 
-*
-* DELIMITER //
-* CREATE PROCEDURE team_years
-* (IN fid varchar(3))
-* BEGIN
-*   SELECT yearID
-*   FROM Teams t
-*   WHERE
-*   t.franchID = fid
-*	ORDER BY yearID desc;
-* END //
-* DELIMITER ;
-* 
-* 
-* DELIMITER //
-* CREATE PROCEDURE latest_name
-* (IN fid varchar(3))
-* BEGIN
-*   SELECT franchName
-*   FROM TeamsFranchises ft
-*   WHERE
-*   ft.franchID = fid;
-* END //
-* DELIMITER ;
-* 
-* DELIMITER //
-* CREATE PROCEDURE team_stats
-* (IN yid int(11), lid varchar(2), tid varchar(3))
-* BEGIN
-* 	SELECT
-* 		Rank,
-* 		G,
-* 		W,
-* 		L,
-* 		attendance
-* 	FROM
-* 		Teams t
-* 	WHERE
-* 		t.yearID = yid AND
-* 		t.lgID = lid AND
-* 		t.teamID = tid;
-* END //
-* DELIMITER ;
-* 		
-*/
+ * Stored procedure calls
+ * 
+ *
+ * DELIMITER // CREATE PROCEDURE games_played (IN tid varchar(3), lid
+ * varchar(2), yr numeric(4)) BEGIN SELECT SUM(CG) FROM Teams t WHERE t.teamID =
+ * tid AND t.lgID = lid AND t.yearID = yr; END // DELIMITER ;
+ * 
+ *
+ * DELIMITER // CREATE PROCEDURE games_won (IN tid varchar(3), lid varchar(2),
+ * yr numeric(4)) BEGIN SELECT SUM(W) FROM Teams t WHERE t.teamID = tid AND
+ * t.lgID = lid AND t.yearID = yr; END // DELIMITER ;
+ *
+ *
+ * DELIMITER // CREATE PROCEDURE games_lost (IN tid varchar(3), lid varchar(2),
+ * yr numeric(4)) BEGIN SELECT SUM(L) FROM Teams t WHERE t.teamID = tid AND
+ * t.lgID = lid AND t.yearID = yr; END // DELIMITER ;
+ * 
+ *
+ * DELIMITER // CREATE PROCEDURE team_years (IN fid varchar(3)) BEGIN SELECT
+ * yearID FROM Teams t WHERE t.franchID = fid ORDER BY yearID desc; END //
+ * DELIMITER ;
+ * 
+ * 
+ * DELIMITER // CREATE PROCEDURE latest_name (IN fid varchar(3)) BEGIN SELECT
+ * franchName FROM TeamsFranchises ft WHERE ft.franchID = fid; END // DELIMITER
+ * ;
+ * 
+ * DELIMITER // CREATE PROCEDURE team_stats (IN yid int(11), lid varchar(2), tid
+ * varchar(3)) BEGIN SELECT Rank, G, W, L, attendance FROM Teams t WHERE
+ * t.yearID = yid AND t.lgID = lid AND t.teamID = tid; END // DELIMITER ;
+ * 
+ */
