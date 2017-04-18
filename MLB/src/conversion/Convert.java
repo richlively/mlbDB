@@ -27,7 +27,7 @@ public class Convert {
 	static Connection conn;
 	static final String MYSQL_CONN_URL =
 			//"jdbc:mysql://192.168.183.132/mlb?user=root&password=password"; //nathan's
-			"jdbc:mysql://192.168.133.129:3306/mlb?user=remote&password=password"; //richie's
+			"jdbc:mysql://192.168.133.129:3306/mlb?user=remote&password=password&noAccessToProcedureBodies=true"; //richie's
 
 	/**
 	 * Only store a single team object for each franchise
@@ -172,19 +172,19 @@ public class Convert {
 					ResultSet latestName_rs = latestName_stmt.executeQuery();
 					//only one row per franchise
 					latestName_rs.next();
-					name = latestName_rs.getString("name");
+					name = latestName_rs.getString("franchName");
 					
 					//find the founding and most recent years for the team
 					CallableStatement years_stmt = conn.prepareCall("{call team_years(?)}");
 					
-					years_stmt.setString(1, teamID);
+					years_stmt.setString(1, franchID);
 					ResultSet years_rs = years_stmt.executeQuery();
 					
 					//dates descending, so most recent year is first, oldest is last
 					years_rs.first();
 					Date recent = convertYearToDate(years_rs.getInt("yearID"));
 					years_rs.last();
-					Date founded = convertYearToDate(years_rs.getInt("yearsID"));
+					Date founded = convertYearToDate(years_rs.getInt("yearID"));
 
 					Team t = new Team();
 					t.setName(name);
@@ -284,6 +284,8 @@ public class Convert {
 			ts.setWins(wins);
 			ts.setLosses(losses);
 			ts.setTotalAttendance(attendance);
+			
+			t.addSeason(ts);
 			
 			teamStats_rs.close();
 		} catch (Exception e) {
