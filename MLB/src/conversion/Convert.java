@@ -258,16 +258,11 @@ public class Convert {
 	 * @param year
 	 * @return the date
 	 *//*
-	private static java.util.Date convertYearToDate(int year) {
-		Calendar c = new GregorianCalendar();
-		Date d = null;
-		// if year is 0, then date wasn't populated in MySQL database
-		if (year != 0) {
-			c.set(Calendar.YEAR, year);
-			d = c.getTime();
-		}
-		return d;
-	}*/
+		 * private static java.util.Date convertYearToDate(int year) { Calendar
+		 * c = new GregorianCalendar(); Date d = null; // if year is 0, then
+		 * date wasn't populated in MySQL database if (year != 0) {
+		 * c.set(Calendar.YEAR, year); d = c.getTime(); } return d; }
+		 */
 
 	/**
 	 * Adds season data to a team
@@ -569,26 +564,63 @@ public class Convert {
 /*
  * Stored procedure calls
  * 
- * DELIMITER // CREATE PROCEDURE players () BEGIN select
- * playerID,nameFirst,nameLast,nameGiven,birthDay,birthMonth,birthYear,deathDay,
- * deathMonth,deathYear,bats, throws,birthCity,birthState,debut,finalGame from
- * Master; END // DELIMITER ;
+ * DELIMITER //
+ * CREATE PROCEDURE players () 
+ * BEGIN 
+ * 	SELECT
+ * 		playerID,nameFirst,nameLast,nameGiven,birthDay,birthMonth,birthYear,deathDay,
+ * 		deathMonth,deathYear,bats, throws,birthCity,birthState,debut,finalGame
+ * 	FROM
+ * 		Master; 
+ * END // 
+ * DELIMITER ;
  * 
- * DELIMITER // CREATE PROCEDURE teams () BEGIN SELECT teamID, yearID, lgID,
- * franchID, name FROM Teams t; END // DELIMITER ;
+ * DELIMITER // 
+ * CREATE PROCEDURE teams () 
+ * BEGIN 
+ * 	SELECT 
+ * 		teamID, yearID, lgID, franchID, name 
+ * 	FROM Teams;
+ * END // 
+ * DELIMITER ;
  * 
  *
- * DELIMITER // CREATE PROCEDURE team_years (IN fid varchar(3)) BEGIN SELECT
- * yearID FROM Teams t WHERE t.franchID = fid ORDER BY yearID desc; END //
+ * DELIMITER // 
+ * CREATE PROCEDURE team_years (IN fid varchar(3)) 
+ * BEGIN 
+ * 	SELECT
+ * 		yearID 
+ * 	FROM 
+ * 		Teams t 
+ * 	WHERE 
+ * 		t.franchID = fid 
+ * 	ORDER BY 
+ * 		yearID desc; 
+ * END //
  * DELIMITER ;
  * 
  * 
- * DELIMITER // CREATE PROCEDURE latest_name (IN fid varchar(3)) BEGIN SELECT
- * franchName FROM TeamsFranchises ft WHERE ft.franchID = fid; END // DELIMITER
- * ;
+ * DELIMITER // 
+ * CREATE PROCEDURE latest_name (IN fid varchar(3)) 
+ * BEGIN 
+ * 	SELECT
+ * 		franchName 
+ * 	FROM 
+ * 		TeamsFranchises ft 
+ * 	WHERE 
+ * 		ft.franchID = fid; 
+ * END // 
+ * DELIMITER ;
  * 
- * DELIMITER // CREATE PROCEDURE team_stats (IN yid int(11), lid varchar(2), tid
- * varchar(3)) BEGIN SELECT Rank, G, W, L, attendance FROM Teams t WHERE
- * t.yearID = yid AND t.lgID = lid AND t.teamID = tid; END // DELIMITER ;
- * 
+ * DELIMITER // 
+ * CREATE PROCEDURE team_stats (IN yid int(11), lid varchar(2), tid varchar(3)) 
+ * BEGIN 
+ * 	SELECT 
+ * 		Rank, G, W, L, attendance 
+ * 	FROM 
+ * 		Teams t 
+ * 	WHERE
+ * 		t.yearID = yid AND t.lgID = lid AND t.teamID = tid; 
+ * END // 
+ * DELIMITER ;
  */
