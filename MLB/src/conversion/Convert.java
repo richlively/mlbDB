@@ -239,7 +239,7 @@ public class Convert {
 		return d;
 	}
 
-	public static void addTeamSeason(Team t, String s) {
+	public static void addTeamSeason(Team t, Integer yr, String s) {
 
 		// games_played(teamID varchar(3), lgID varchar(2), yearID numeric(4))
 		// games_won(teamID varchar(3), lgID varchar(2), yearID numeric(4))
@@ -247,15 +247,16 @@ public class Convert {
 		// rank
 		// totalAttendance
 		
-		// MySQL Stored Procedure Calls Avalible
-		// games_played(
+                // I didn't realize you had implemented this, so I almost completly redid it in procedure calls.
+                // I've put my code at the bottom, in case we go for the EC
                 
       		Set<String> positions = new HashSet<String>();
                 TeamSeason ts = new TeamSeason();
 		try {
-			PreparedStatement ps = conn.prepareStatement("SELECT " + "CG, W, L, Rank as R, Attendance as A " + "from Teams " + "where teamID = ? and lgID = ?;");
+			PreparedStatement ps = conn.prepareStatement("SELECT " + "CG, W, L, Rank as R, Attendance as A " + "from Teams " + "where teamID = ? and lgID = ? and yearID = ?;");
 			ps.setString(1, t.getId().toString());
                         ps.setString(2, t.getLeague());
+                        ps.setString(3, yr.toString());
 			ResultSet rs = ps.executeQuery();
 			rs.next();
                         
@@ -468,3 +469,134 @@ public class Convert {
 	}
 
 }
+
+/*
+* Stored procedure calls
+* 
+*
+* DELIMITER //
+* CREATE PROCEDURE games_played
+* (IN tid varchar(3), lid varchar(2), yr numeric(4))
+* BEGIN
+*   SELECT SUM(CG)
+*   FROM Teams t
+*   WHERE
+*   t.teamID = tid AND
+*   t.lgID = lid AND
+*	t.yearID = yr;
+* END //
+* DELIMITER ;
+* 
+*
+* DELIMITER //
+* CREATE PROCEDURE games_won
+* (IN tid varchar(3), lid varchar(2), yr numeric(4))
+* BEGIN
+*   SELECT SUM(W)
+*   FROM Teams t
+*   WHERE
+*   t.teamID = tid AND
+*   t.lgID = lid AND
+*	t.yearID = yr;
+* END //
+* DELIMITER ;
+*
+*
+* DELIMITER //
+* CREATE PROCEDURE games_lost
+* (IN tid varchar(3), lid varchar(2), yr numeric(4))
+* BEGIN
+*   SELECT SUM(L)
+*   FROM Teams t
+*   WHERE
+*   t.teamID = tid AND
+*   t.lgID = lid AND
+*	t.yearID = yr;
+* END //
+* DELIMITER ;
+* 
+*
+* DELIMITER //
+* CREATE PROCEDURE oldest_year
+* (IN tid varchar(3), lid varchar(2))
+* BEGIN
+*   SELECT yearID
+*   FROM Teams t
+*   WHERE
+*   t.teamID = tid AND
+*   t.lgID = lid
+*	ORDER BY yearID;
+* END //
+* DELIMITER ;
+*
+*
+* DELIMITER //
+* CREATE PROCEDURE youngest_year
+* (IN tid varchar(3), lid varchar(2))
+* BEGIN
+*   SELECT yearID
+*   FROM Teams t
+*   WHERE
+*   t.teamID = tid AND
+*   t.lgID = lid
+*	ORDER BY yearID desc;
+* END //
+* DELIMITER ;
+* 
+*/
+
+
+
+// public static void addTeamSeason(Team t, String tid, String lid, Integer yr) {
+
+//             // games_played(teamID varchar(3), lgID varchar(2), yearID numeric(4))
+//             // games_won(teamID varchar(3), lgID varchar(2), yearID numeric(4))
+//             // games_lost(teamID varchar(3), lgID varchar(2), yearID numeric(4))
+//             // rank
+//             // totalAttendance
+
+//             // MySQL Stored Procedure Calls Avalible
+//             // games_played(
+//             Set<String> positions = new HashSet<String>();
+//             TeamSeason ts = new TeamSeason();
+
+//             try{
+//                 ResultSet prs, wrs, lrs;
+//                 CallableStatement played_stmt = conn.prepareCall("{call games_played(?, ?, ?)}");
+//                 CallableStatement won_stmt = conn.prepareCall("{call games_won(?, ?, ?)}");
+//                 CallableStatement lost_stmt = conn.prepareCall("{call games_lost(?, ?, ?)}");
+
+//                 played_stmt.setString(1, tid);
+//                 played_stmt.setString(2, lid);
+//                 played_stmt.setString(3, yr.toString());
+//                 prs = played_stmt.executeQuery();
+//                 prs.next();
+
+//                 won_stmt.setString(1, tid);
+//                 won_stmt.setString(2, lid);
+//                 won_stmt.setString(3, yr.toString());
+//                 wrs = won_stmt.executeQuery();
+//                 wrs.next();
+                
+//                 lost_stmt.setString(1, tid);
+//                 lost_stmt.setString(2, lid);
+//                 lost_stmt.setString(3, yr.toString());
+//                 lrs = lost_stmt.executeQuery();
+//                 lrs.next();
+                
+//                 ts.setGamesPlayed(prs.getInt(1));
+//                 ts.setWins(wrs.getInt(1));
+//                 ts.setLosses(lrs.getInt(1));
+
+//                 ts.setGamesPlayed(rs.findColumn("CG"));
+//                 ts.setWins(rs.findColumn("W"));
+//                 ts.setLosses(rs.findColumn("L"));
+//                 ts.setRank(rs.findColumn("R"));
+//                 ts.setTotalAttendance(rs.findColumn("A"));
+
+//                 rs.close();
+//                 ps.close();
+//             } catch (Exception e) {
+//                     e.printStackTrace();
+//             }
+// 	}
