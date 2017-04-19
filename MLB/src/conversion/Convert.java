@@ -550,6 +550,7 @@ FROM
   Master;
 END //
 DELIMITER ;
+
 DELIMITER //
 CREATE
 PROCEDURE positions(IN pid VARCHAR(9))
@@ -562,6 +563,7 @@ WHERE
   f.playerID = pid ;
 END //
 DELIMITER ;
+
 DELIMITER //
 CREATE
 PROCEDURE seasons(IN pid VARCHAR(9))
@@ -581,6 +583,7 @@ GROUP BY
   lgID ;
 END //
 DELIMITER ;
+
 DELIMITER //
 CREATE
 PROCEDURE teams()
@@ -609,6 +612,7 @@ ORDER BY
   yearID DESC ;
 END //
 DELIMITER ;
+
 DELIMITER //
 CREATE
 PROCEDURE latest_name(IN fid VARCHAR(3))
@@ -641,6 +645,7 @@ WHERE
   t.yearID = yid AND t.lgID = lid AND t.teamID = tid ;
 END //
 DELIMITER ;
+
 DELIMITER //
 CREATE
 PROCEDURE salary(IN pid VARCHAR(9), yid INT(11))
@@ -653,6 +658,7 @@ WHERE
   s.playerID = pid AND s.yearID = yid ;
 END //
 DELIMITER ;
+
 DELIMITER //
 CREATE
 PROCEDURE batting_stats(IN pid VARCHAR(9), yid INT(11))
@@ -689,6 +695,7 @@ WHERE
   f.playerID = pid AND f.yearID = yid ;
 END //
 DELIMITER ;
+
 DELIMITER //
 CREATE
 PROCEDURE pitching_stats(IN pid VARCHAR(9), yid INT(11))
@@ -711,6 +718,7 @@ WHERE
   p.playerID = pid AND p.yearID = yid ;
 END //
 DELIMITER ;
+
 DELIMITER //
 CREATE
 PROCEDURE catching_stats(IN pid VARCHAR(9), yid INT(11))
