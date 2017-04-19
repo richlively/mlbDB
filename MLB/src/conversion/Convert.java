@@ -36,7 +36,7 @@ public class Convert {
 	 */
 	static HashMap<String, Team> teams = new HashMap<String, Team>();
 	/**
-	 * key - lgID + teamID value - teamSeason object
+	 * key - yearID + lgID + teamID value - teamSeason object
 	 */
 	static HashMap<String, TeamSeason> teamSeasons = new HashMap<String, TeamSeason>();
 
@@ -71,15 +71,8 @@ public class Convert {
 	 */
 	public static void convertPlayers() {
 		try {
-			PreparedStatement ps = conn.prepareStatement(
-					"select " + "playerID, " + "nameFirst, " + "nameLast, " + "nameGiven, " + "birthDay, "
-							+ "birthMonth, " + "birthYear, " + "deathDay, " + "deathMonth, " + "deathYear, " + "bats, "
-							+ "throws, " + "birthCity, " + "birthState, " + "debut, " + "finalGame " + "from Master");
-			// for debugging comment previous line, uncomment
-			// next line
-			// "from Master where playerID = 'bondsba01' or playerID =
-			// 'youklke01';");
-			ResultSet rs = ps.executeQuery();
+			CallableStatement cs = conn.prepareCall("{call players()}");
+			ResultSet rs = cs.executeQuery();
 			int count = 0; // for progress feedback only
 			while (rs.next()) {
 				count++;
@@ -130,7 +123,7 @@ public class Convert {
 				HibernateUtil.persistPlayer(p);
 			}
 			rs.close();
-			ps.close();
+			cs.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -142,12 +135,8 @@ public class Convert {
 	 */
 	public static void convertTeams() {
 		try {
-			PreparedStatement ps = conn.prepareStatement(
-					"select " + "teamID, " + "yearID, " + "lgID, " + "franchID, " + "name " + "from Teams");
-			// for debugging comment previous line, uncomment next line
-			// "from Teams where (yearID = 1871 and lgID = 'NA' and teamID =
-			// 'BS1') or ( yearID = 1871 and lgID = 'NA' and teamID = 'CH1');");
-			ResultSet rs = ps.executeQuery();
+			CallableStatement cs = conn.prepareCall("{call teams()}");
+			ResultSet rs = cs.executeQuery();
 
 			int count = 0; // for progress feedback only
 			while (rs.next()) {
@@ -164,8 +153,8 @@ public class Convert {
 				 * shows that every team (even teams that lasted only one year)
 				 * has a non-null franchID so no reason to check if it is null
 				 * (i.e. even though the DB schema does allow null franchises,
-				 * they do not occur in this instance) also, this is the only
-				 * feasible way to keep track of when a team changes its name
+				 * they do not occur in this instance) also, this is the an
+				 * effective way to keep track of when a team changes its name
 				 * since the teamID also changes when the name changes
 				 */
 				String franchID = rs.getString("franchID");
@@ -214,7 +203,7 @@ public class Convert {
 				}
 			}
 			rs.close();
-			ps.close();
+			cs.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -253,18 +242,6 @@ public class Convert {
 	}
 
 	/**
-	 * Converts an integer into a Date object
-	 * 
-	 * @param year
-	 * @return the date
-	 *//*
-		 * private static java.util.Date convertYearToDate(int year) { Calendar
-		 * c = new GregorianCalendar(); Date d = null; // if year is 0, then
-		 * date wasn't populated in MySQL database if (year != 0) {
-		 * c.set(Calendar.YEAR, year); d = c.getTime(); } return d; }
-		 */
-
-	/**
 	 * Adds season data to a team
 	 * 
 	 * @param t
@@ -300,7 +277,7 @@ public class Convert {
 			ts.setTotalAttendance(attendance);
 
 			t.addSeason(ts);
-			teamSeasons.put(lgID + teamID, ts);
+			teamSeasons.put(yearID + lgID + teamID, ts);
 
 			teamStats_rs.close();
 		} catch (Exception e) {
@@ -311,16 +288,15 @@ public class Convert {
 	public static void addPositions(Player p, String pid) {
 		Set<String> positions = new HashSet<String>();
 		try {
-			PreparedStatement ps = conn
-					.prepareStatement("select " + "distinct pos " + "from Fielding " + "where playerID = ?;");
-			ps.setString(1, pid);
-			ResultSet rs = ps.executeQuery();
+			CallableStatement cs = conn.prepareCall("{call positions(?)}");
+			cs.setString(1, pid);
+			ResultSet rs = cs.executeQuery();
 			while (rs.next()) {
 				String pos = rs.getString("pos");
 				positions.add(pos);
 			}
 			rs.close();
-			ps.close();
+			cs.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -337,11 +313,10 @@ public class Convert {
 	 */
 	public static void addSeasons(Player p, String pid) {
 		try {
-			PreparedStatement ps = conn
-					.prepareStatement("select " + "yearID, " + "teamID, " + "lgId, " + "sum(G) as gamesPlayed "
-							+ "from Batting " + "where playerID = ? " + "group by yearID, teamID, lgID;");
-			ps.setString(1, pid);
-			ResultSet rs = ps.executeQuery();
+			CallableStatement cs = conn
+					.prepareCall("{call seasons(?)}");
+			cs.setString(1, pid);
+			ResultSet rs = cs.executeQuery();
 			PlayerSeason s = null;
 			while (rs.next()) {
 				int yid = rs.getInt("yearID");
@@ -350,7 +325,7 @@ public class Convert {
 				// season as well
 				String leagueID = rs.getString("lgId");
 				String teamID = rs.getString("teamID");
-				TeamSeason ts = teamSeasons.get(leagueID + teamID);
+				TeamSeason ts = teamSeasons.get(yid + leagueID + teamID);
 				ts.addPlayer(p);
 
 				// it is possible to see more than one of these per player if he
@@ -378,7 +353,7 @@ public class Convert {
 				}
 			}
 			rs.close();
-			ps.close();
+			cs.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -397,16 +372,15 @@ public class Convert {
 	public static double getSalary(String pid, Integer yid) {
 		double salary = 0;
 		try {
-			PreparedStatement ps = conn.prepareStatement("select " + "sum(salary) as salary " + "from Salaries "
-					+ "where playerID = ? " + "and yearID = ? ;");
-			ps.setString(1, pid);
-			ps.setInt(2, yid);
-			ResultSet rs = ps.executeQuery();
+			CallableStatement cs = conn.prepareCall("{call salary(?,?)}");
+			cs.setString(1, pid);
+			cs.setInt(2, yid);
+			ResultSet rs = cs.executeQuery();
 			while (rs.next()) {
 				salary = rs.getDouble("salary");
 			}
 			rs.close();
-			ps.close();
+			cs.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -424,14 +398,10 @@ public class Convert {
 	public static BattingStats getBatting(PlayerSeason psi, String pid, Integer yid) {
 		BattingStats s = new BattingStats();
 		try {
-			PreparedStatement ps = conn.prepareStatement("select " + "" + "sum(AB) as atBats, " + "sum(H) as hits, "
-					+ "sum(2B) as doubles, " + "sum(3B) as triples, " + "sum(HR) as homeRuns, "
-					+ "sum(RBI) as runsBattedIn, " + "sum(SO) as strikeouts, " + "sum(BB) as walks, "
-					+ "sum(HBP) as hitByPitch, " + "sum(IBB) as intentionalWalks, " + "sum(SB) as steals, "
-					+ "sum(CS) as stealsAttempted " + "from Batting " + "where playerID = ? " + "and yearID = ? ;");
-			ps.setString(1, pid);
-			ps.setInt(2, yid);
-			ResultSet rs = ps.executeQuery();
+			CallableStatement cs = conn.prepareCall("{call batting_stats(?,?)}");
+			cs.setString(1, pid);
+			cs.setInt(2, yid);
+			ResultSet rs = cs.executeQuery();
 			while (rs.next()) {
 				s.setId(psi);
 				s.setAtBats(rs.getInt("atBats"));
@@ -448,7 +418,7 @@ public class Convert {
 				s.setStealsAttempted(rs.getInt("stealsAttempted"));
 			}
 			rs.close();
-			ps.close();
+			cs.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -466,18 +436,17 @@ public class Convert {
 	public static FieldingStats getFielding(PlayerSeason psi, String pid, Integer yid) {
 		FieldingStats s = new FieldingStats();
 		try {
-			PreparedStatement ps = conn.prepareStatement("select " + "sum(E) as errors, " + "sum(PO) as putOuts "
-					+ "from Fielding " + "where playerID = ? " + "and yearID = ? ;");
-			ps.setString(1, pid);
-			ps.setInt(2, yid);
-			ResultSet rs = ps.executeQuery();
+			CallableStatement cs = conn.prepareCall("{call fielding_stats(?,?)}");
+			cs.setString(1, pid);
+			cs.setInt(2, yid);
+			ResultSet rs = cs.executeQuery();
 			while (rs.next()) {
 				s.setId(psi);
 				s.setErrors(rs.getInt("errors"));
 				s.setPutOuts(rs.getInt("putOuts"));
 			}
 			rs.close();
-			ps.close();
+			cs.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -495,14 +464,10 @@ public class Convert {
 	public static PitchingStats getPitching(PlayerSeason psi, String pid, Integer yid) {
 		PitchingStats s = new PitchingStats();
 		try {
-			PreparedStatement ps = conn.prepareStatement("select " + "sum(IPOuts) as outsPitched, "
-					+ "sum(ER) as earnedRunsAllowed, " + "sum(HR) as homeRunsAllowed, " + "sum(SO) as strikeouts, "
-					+ "sum(BB) as walks, " + "sum(W) as wins, " + "sum(L) as losses, " + "sum(WP) as wildPitches, "
-					+ "sum(BFP) as battersFaced, " + "sum(HBP) as hitBatters, " + "sum(SV) as saves " + "from Pitching "
-					+ "where playerID = ? " + "and yearID = ? ;");
-			ps.setString(1, pid);
-			ps.setInt(2, yid);
-			ResultSet rs = ps.executeQuery();
+			CallableStatement cs = conn.prepareCall("{call pitching_stats(?,?)}");
+			cs.setString(1, pid);
+			cs.setInt(2, yid);
+			ResultSet rs = cs.executeQuery();
 			while (rs.next()) {
 				s.setId(psi);
 				s.setOutsPitched(rs.getInt("outsPitched"));
@@ -518,7 +483,7 @@ public class Convert {
 				s.setSaves(rs.getInt("saves"));
 			}
 			rs.close();
-			ps.close();
+			cs.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -535,14 +500,12 @@ public class Convert {
 	 */
 	public static CatchingStats getCatching(PlayerSeason psi, String pid, Integer yid) {
 		CatchingStats s = new CatchingStats();
-		PreparedStatement ps = null;
+		CallableStatement cs = null;
 		try {
-			ps = conn.prepareStatement("select " + "sum(PB) as passedBalls, " + "sum(WP) as wildPitches, "
-					+ "sum(SB) as stealsAllowed, " + "sum(CS) as stealsCaught " + "from Fielding "
-					+ "where playerID = ? " + "and yearID = ? ;");
-			ps.setString(1, pid);
-			ps.setInt(2, yid);
-			ResultSet rs = ps.executeQuery();
+			cs = conn.prepareCall("{call catching_stats(?,?)}");
+			cs.setString(1, pid);
+			cs.setInt(2, yid);
+			ResultSet rs = cs.executeQuery();
 			while (rs.next()) {
 				s.setId(psi);
 				s.setPassedBalls(rs.getInt("passedBalls"));
@@ -551,9 +514,9 @@ public class Convert {
 				s.setStealsCaught(rs.getInt("stealsCaught"));
 			}
 			rs.close();
-			ps.close();
+			cs.close();
 		} catch (Exception e) {
-			ps.toString();
+			cs.toString();
 			e.printStackTrace();
 		}
 		return s;
@@ -561,69 +524,206 @@ public class Convert {
 
 }
 
-/*
- * Stored procedure calls
- * 
- * DELIMITER //
- * CREATE PROCEDURE players () 
- * BEGIN 
- * 	SELECT
- * 		playerID,nameFirst,nameLast,nameGiven,birthDay,birthMonth,birthYear,deathDay,
- * 		deathMonth,deathYear,bats,throws,birthCity,birthState,debut,finalGame
- * 	FROM
- * 		Master; 
- * END // 
- * DELIMITER ;
- * 
- * TODO need stored procedure calls for addPositions, addSeasons, and each of the getStats
- * TODO change above functions to use said procedure calls
- * 
- * DELIMITER // 
- * CREATE PROCEDURE teams () 
- * BEGIN 
- * 	SELECT 
- * 		teamID, yearID, lgID, franchID, name 
- * 	FROM Teams;
- * END // 
- * DELIMITER ;
- * 
- *
- * DELIMITER // 
- * CREATE PROCEDURE team_years (IN fid varchar(3)) 
- * BEGIN 
- * 	SELECT
- * 		yearID 
- * 	FROM 
- * 		Teams t 
- * 	WHERE 
- * 		t.franchID = fid 
- * 	ORDER BY 
- * 		yearID desc; 
- * END //
- * DELIMITER ;
- * 
- * 
- * DELIMITER // 
- * CREATE PROCEDURE latest_name (IN fid varchar(3)) 
- * BEGIN 
- * 	SELECT
- * 		franchName 
- * 	FROM 
- * 		TeamsFranchises ft 
- * 	WHERE 
- * 		ft.franchID = fid; 
- * END // 
- * DELIMITER ;
- * 
- * DELIMITER // 
- * CREATE PROCEDURE team_stats (IN yid int(11), lid varchar(2), tid varchar(3)) 
- * BEGIN 
- * 	SELECT 
- * 		Rank, G, W, L, attendance 
- * 	FROM 
- * 		Teams t 
- * 	WHERE
- * 		t.yearID = yid AND t.lgID = lid AND t.teamID = tid; 
- * END // 
- * DELIMITER ;
- */
+/* Stored procedure calls
+DELIMITER //
+CREATE
+PROCEDURE players()
+BEGIN
+SELECT
+  playerID,
+  nameFirst,
+  nameLast,
+  nameGiven,
+  birthDay,
+  birthMonth,
+  birthYear,
+  deathDay,
+  deathMonth,
+  deathYear,
+  bats,
+  throws,
+  birthCity,
+  birthState,
+  debut,
+  finalGame
+FROM 
+  Master;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE
+PROCEDURE positions(IN pid VARCHAR(9))
+BEGIN
+SELECT DISTINCT
+  pos
+FROM
+  Fielding f
+WHERE
+  f.playerID = pid ;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE
+PROCEDURE seasons(IN pid VARCHAR(9))
+BEGIN
+SELECT
+  yearID,
+  teamID,
+  lgId,
+  SUM(G) AS gamesPlayed
+FROM
+  Batting b
+WHERE
+  b.playerID = pid
+GROUP BY
+  yearID,
+  teamID,
+  lgID ;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE
+PROCEDURE teams()
+BEGIN
+SELECT
+  teamID,
+  yearID,
+  lgID,
+  franchID,
+  NAME
+FROM
+  Teams ;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE
+PROCEDURE team_years(IN fid VARCHAR(3))
+BEGIN
+SELECT
+  yearID
+FROM
+  Teams t
+WHERE
+  t.franchID = fid
+ORDER BY
+  yearID DESC ;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE
+PROCEDURE latest_name(IN fid VARCHAR(3))
+BEGIN
+SELECT
+  franchName
+FROM
+  TeamsFranchises ft
+WHERE
+  ft.franchID = fid ;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE
+PROCEDURE team_stats(
+  IN yid INT(11),
+  lid VARCHAR(2),
+  tid VARCHAR(3)
+)
+BEGIN
+SELECT
+  Rank,
+  G,
+  W,
+  L,
+  attendance
+FROM
+  Teams t
+WHERE
+  t.yearID = yid AND t.lgID = lid AND t.teamID = tid ;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE
+PROCEDURE salary(IN pid VARCHAR(9), yid INT(11))
+BEGIN
+SELECT
+  SUM(salary) AS salary
+FROM
+  Salaries s
+WHERE
+  s.playerID = pid AND s.yearID = yid ;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE
+PROCEDURE batting_stats(IN pid VARCHAR(9), yid INT(11))
+BEGIN
+SELECT
+  SUM(AB) AS atBats,
+  SUM(H) AS hits,
+  SUM(2B) AS doubles,
+  SUM(3B) AS triples,
+  SUM(HR) AS homeRuns,
+  SUM(RBI) AS runsBattedIn,
+  SUM(SO) AS strikeouts,
+  SUM(BB) AS walks,
+  SUM(HBP) AS hitByPitch,
+  SUM(IBB) AS intentionalWalks,
+  SUM(SB) AS steals,
+  SUM(CS) AS stealsAttempted
+FROM
+  Batting b
+WHERE
+  b.playerID = pid AND b.yearID = yid ;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE
+PROCEDURE fielding_stats(IN pid VARCHAR(9), yid INT(11))
+BEGIN
+SELECT
+  SUM(E) AS ERRORS,
+  SUM(PO) AS putOuts
+FROM
+  Fielding f
+WHERE
+  f.playerID = pid AND f.yearID = yid ;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE
+PROCEDURE pitching_stats(IN pid VARCHAR(9), yid INT(11))
+BEGIN
+SELECT
+  SUM(IPOuts) AS outsPitched,
+  SUM(ER) AS earnedRunsAllowed,
+  SUM(HR) AS homeRunsAllowed,
+  SUM(SO) AS strikeouts,
+  SUM(BB) AS walks,
+  SUM(W) AS wins,
+  SUM(L) AS losses,
+  SUM(WP) AS wildPitches,
+  SUM(BFP) AS battersFaced,
+  SUM(HBP) AS hitBatters,
+  SUM(SV) AS saves
+FROM
+  Pitching p
+WHERE
+  p.playerID = pid AND p.yearID = yid ;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE
+PROCEDURE catching_stats(IN pid VARCHAR(9), yid INT(11))
+BEGIN
+SELECT
+  SUM(PB) AS passedBalls,
+  SUM(WP) AS wildPitches,
+  SUM(SB) AS stealsAllowed,
+  SUM(CS) AS stealsCaught
+FROM
+  Fielding f
+WHERE
+  f.playerID = pid AND f.yearID = yid ;
+END //
+DELIMITER ;
+*/
