@@ -55,7 +55,7 @@ public class TeamSeason implements Serializable {
 	}
 
 	// creates the teamseasonplayer table, which is just a join table
-	@ManyToMany(fetch = FetchType.LAZY)
+	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "teamseasonplayer", joinColumns = {
 			@JoinColumn(name = "teamId", insertable = false, updatable = false),
 			@JoinColumn(name = "year", insertable = false, updatable = false) }, inverseJoinColumns = {
