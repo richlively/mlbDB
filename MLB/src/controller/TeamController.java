@@ -1,5 +1,7 @@
 package controller;
 
+import bo.Player;
+import bo.PlayerSeason;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +65,7 @@ public class TeamController extends BaseController {
     }
     
     private void processRoster() {
-		// TODO Auto-generated method stub
+            // TODO Auto-generated method stub
 		
 	}
 
@@ -86,6 +88,41 @@ public class TeamController extends BaseController {
         }
         view.buildTable(table);
     }
+    
+    private void buildSearchResultsTableTeamRoster(Team t, Integer yr) {
+        TeamSeason ts = t.getTeamSeason(yr);
+    	// build 2 tables.  first the team details, then the roster details
+        // need a row for the table headers
+        String[][] teamTable = new String[2][4];
+        teamTable[0][0] = "Name";
+        teamTable[0][1] = "League";
+        teamTable[0][2] = "Year";
+        teamTable[0][3] = "Player Payroll";
+        teamTable[1][0] = t.getName();
+        teamTable[1][1] = t.getLeague();
+        teamTable[1][2] = ts.getYear().toString();
+        teamTable[1][3] = "0.00";
+        
+        view.buildTable(teamTable);
+        // now for seasons
+        String[][] seasonTable = new String[ts.getPlayers().size()+1][3];
+        seasonTable[0][0] = "Name";
+        seasonTable[0][1] = "Games Played";
+        seasonTable[0][2] = "Salary";
+        int i = 0;
+        
+        Set<Player> players = ts.getPlayers();
+        
+        for (Player p : players) {
+            PlayerSeason ps = p.getPlayerSeason(yr);
+            i++;
+            seasonTable[i][0] = p.getName();
+            seasonTable[i][1] = ps.getGamesPlayed().toString();
+            seasonTable[i][2] = ps.getSalary().toString();
+        }
+        view.buildTable(seasonTable);
+    }
+
     
     private void buildSearchResultsTableTeamDetail(Team t) {
     	Set<TeamSeason> seasons = t.getSeasons();
