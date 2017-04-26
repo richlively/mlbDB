@@ -56,6 +56,7 @@ public class TeamController extends BaseController {
         if (id == null) {
             return;
         }
+        System.out.println(Integer.valueOf(id));
         Team t = (Team) HibernateUtil.retrieveTeamById(Integer.valueOf(id));
         if (t == null) return;
         buildSearchResultsTableTeamDetail(t);
@@ -68,34 +69,34 @@ public class TeamController extends BaseController {
 	}
 
     private void buildSearchResultsTableTeam(List<Team> bos) {
-        // need a row for the table headers
-        String[][] table = new String[bos.size() + 1][10];
-        table[0][0] = "Id";
-        table[0][1] = "Name";
-        table[0][2] = "Lifetime Salary";
-        table[0][3] = "Games Played";
-        table[0][4] = "First Game";
-        table[0][5] = "Last Game";
-        table[0][6] = "Career Home Runs";
-        table[0][7] = "Career Hits";
-        table[0][8] = "Career Batting Average";
-        table[0][9] = "Career Steals";
-        for (int i = 0; i < bos.size(); i++) {
-            Team t = bos.get(i);
-            TeamSeasonStats stats = new TeamSeasonStats(t);
-            String tid = t.getId().toString();
-            table[i + 1][0] = view.encodeLink(new String[]{"id"}, new String[]{tid}, tid, ACT_DETAIL, SSP_PLAYER);
-            table[i + 1][1] = t.getName();
-            table[i + 1][2] = DOLLAR_FORMAT.format(stats.getSalary());
-            table[i + 1][3] = stats.getGamesPlayed().toString();
-            table[i + 1][4] = formatDate(t.getFirstGame());
-            table[i + 1][5] = formatDate(t.getLastGame());
-            table[i + 1][6] = stats.getHomeRuns().toString();
-            table[i + 1][7] = stats.getHits().toString();
-            table[i + 1][8] = DOUBLE_FORMAT.format(stats.getBattingAverage());
-            table[i + 1][9] = stats.getSteals().toString();
-        }
-        view.buildTable(table);
+//        // need a row for the table headers
+//        String[][] table = new String[bos.size() + 1][10];
+//        table[0][0] = "Id";
+//        table[0][1] = "Name";
+//        table[0][2] = "Lifetime Salary";
+//        table[0][3] = "Games Played";
+//        table[0][4] = "First Game";
+//        table[0][5] = "Last Game";
+//        table[0][6] = "Career Home Runs";
+//        table[0][7] = "Career Hits";
+//        table[0][8] = "Career Batting Average";
+//        table[0][9] = "Career Steals";
+//        for (int i = 0; i < bos.size(); i++) {
+//            Team t = bos.get(i);
+//            TeamSeasonStats stats = new TeamSeasonStats(t);
+//            String tid = t.getId().toString();
+//            table[i + 1][0] = view.encodeLink(new String[]{"id"}, new String[]{tid}, tid, ACT_DETAIL, SSP_PLAYER);
+//            table[i + 1][1] = t.getName();
+//            table[i + 1][2] = DOLLAR_FORMAT.format(stats.getSalary());
+//            table[i + 1][3] = stats.getGamesPlayed().toString();
+//            table[i + 1][4] = formatDate(t.getFirstGame());
+//            table[i + 1][5] = formatDate(t.getLastGame());
+//            table[i + 1][6] = stats.getHomeRuns().toString();
+//            table[i + 1][7] = stats.getHits().toString();
+//            table[i + 1][8] = DOUBLE_FORMAT.format(stats.getBattingAverage());
+//            table[i + 1][9] = stats.getSteals().toString();
+//        }
+//        view.buildTable(table);
     }
     
     private void buildSearchResultsTableTeamDetail(Team t) {
