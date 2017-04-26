@@ -74,11 +74,11 @@ public class TeamController extends BaseController {
 		}
 		System.out.println("Ids ok");
 		//get a TeamSeason instead
-		Team t = (Team) HibernateUtil.retrieveTeamById(Integer.valueOf(tid));
-		if (t == null) return;
-		System.out.println("Team ok");
+		TeamSeason ts= (TeamSeason) HibernateUtil.retrieveTeamSeasonById(Integer.valueOf(tid), Integer.valueOf(yid));
+		if (ts == null) return;
+		System.out.println("Teamseason ok");
 		System.out.println("About to build roster");
-		buildSearchResultsTableTeamRoster(t, Integer.valueOf(yid));
+		buildSearchResultsTableTeamRoster(ts);
 		view.buildLinkToSearch();
 	}
 
@@ -103,8 +103,7 @@ public class TeamController extends BaseController {
         view.buildTable(table);
     }
     
-    private void buildSearchResultsTableTeamRoster(Team t, Integer yr) {
-        TeamSeason ts = t.getTeamSeason(yr);
+    private void buildSearchResultsTableTeamRoster(TeamSeason ts) {
     	// build 2 tables.  first the team details, then the roster details
         // need a row for the table headers
         String[][] teamTable = new String[2][4];
@@ -112,13 +111,10 @@ public class TeamController extends BaseController {
         teamTable[0][1] = "League";
         teamTable[0][2] = "Year";
         teamTable[0][3] = "Player Payroll";
-        teamTable[1][0] = t.getName();
-        teamTable[1][1] = t.getLeague();
+        teamTable[1][0] = ts.getTeam().getName();
+        teamTable[1][1] = ts.getTeam().getLeague();
         teamTable[1][2] = ts.getYear().toString();
-        teamTable[1][3] = "0.00";
         
-        view.buildTable(teamTable);
-        System.out.println("Built team table");
         // now for seasons
         Set<Player> players = ts.getPlayers();
         if (players == null) {
@@ -129,14 +125,19 @@ public class TeamController extends BaseController {
         seasonTable[0][1] = "Games Played";
         seasonTable[0][2] = "Salary";
         int i = 0;
+        Double totSal = 0.00;
         
         for (Player p : players) {
-            PlayerSeason ps = p.getPlayerSeason(yr);
+            PlayerSeason ps = p.getPlayerSeason(ts.getYear());
             i++;
-            seasonTable[i][0] = p.getName();
+            seasonTable[i][0] = view.encodeLink(new String[] {"id"}, new String[] {p.getId().toString()}, p.getName(), ACT_DETAIL, SSP_PLAYER);
             seasonTable[i][1] = ps.getGamesPlayed().toString();
-            seasonTable[i][2] = ps.getSalary().toString();
+            Double salary = ps.getSalary();
+            seasonTable[i][2] = salary.toString();
+            totSal += salary;
         }
+        teamTable[1][3] = totSal.toString();
+        view.buildTable(teamTable);
         view.buildTable(seasonTable);
     }
 
@@ -159,22 +160,24 @@ public class TeamController extends BaseController {
         
         view.buildTable(teamTable);
         // now for seasons
-        String[][] seasonTable = new String[seasons.size()+1][6];
+        String[][] seasonTable = new String[seasons.size()+1][7];
         seasonTable[0][0] = "Year";
         seasonTable[0][1] = "Games Played";
-        seasonTable[0][2] = "Wins";
-        seasonTable[0][3] = "Losses";
-        seasonTable[0][4] = "Rank";
-        seasonTable[0][5] = "Attendance";
+        seasonTable[0][2] = "Roster";
+        seasonTable[0][3] = "Wins";
+        seasonTable[0][4] = "Losses";
+        seasonTable[0][5] = "Rank";
+        seasonTable[0][6] = "Attendance";
         int i = 0;
         for (TeamSeason ts: list) {
         	i++;
         	seasonTable[i][0] = ts.getYear().toString();
         	seasonTable[i][1] = ts.getGamesPlayed().toString();
-        	seasonTable[i][2] = ts.getWins().toString();
-        	seasonTable[i][3] = ts.getLosses().toString();
-        	seasonTable[i][4] = ts.getRank().toString();
-        	seasonTable[i][5] = ts.getTotalAttendance().toString();
+        	seasonTable[i][1] = view.encodeLink(new String[] {"tid", "yid"}, new String[] {ts.getTeam().getId().toString(), ts.getYear().toString()} , "Roster", ACT_ROSTER, SSP_TEAM);
+        	seasonTable[i][3] = ts.getWins().toString();
+        	seasonTable[i][4] = ts.getLosses().toString();
+        	seasonTable[i][5] = ts.getRank().toString();
+        	seasonTable[i][6] = ts.getTotalAttendance().toString();
         }
         view.buildTable(seasonTable);
     }

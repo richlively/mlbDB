@@ -94,6 +94,7 @@ public class TeamSeason implements Serializable {
 
 	/*---------- begin getters and setters ----------*/
 	
+	
 	public Set<Player> getPlayers() {
 		return players;
 	}
