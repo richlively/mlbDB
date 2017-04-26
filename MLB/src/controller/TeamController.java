@@ -98,7 +98,7 @@ public class TeamController extends BaseController {
     	Collections.sort(list, TeamSeason.teamSeasonsComparator);
     	// build 2 tables.  first the player details, then the season details
         // need a row for the table headers
-        String[][] teamTable = new String[2][6];
+        String[][] teamTable = new String[2][4];
         teamTable[0][0] = "Name";
         teamTable[0][1] = "League";
         teamTable[0][2] = "Year Founded";
@@ -110,24 +110,22 @@ public class TeamController extends BaseController {
         
         view.buildTable(teamTable);
         // now for seasons
-        String[][] seasonTable = new String[seasons.size()+1][7];
+        String[][] seasonTable = new String[seasons.size()+1][6];
         seasonTable[0][0] = "Year";
         seasonTable[0][1] = "Games Played";
         seasonTable[0][2] = "Wins";
         seasonTable[0][3] = "Losses";
-        seasonTable[0][4] = "At Bats";
-        seasonTable[0][5] = "Batting Average";
-        seasonTable[0][6] = "Home Runs";
+        seasonTable[0][4] = "Rank";
+        seasonTable[0][5] = "Attendance";
         int i = 0;
         for (TeamSeason ts: list) {
         	i++;
         	seasonTable[i][0] = ts.getYear().toString();
         	seasonTable[i][1] = ts.getGamesPlayed().toString();
-        	seasonTable[i][2] = DOLLAR_FORMAT.format(ts.getSalary());
-        	seasonTable[i][3] = ts.getBattingStats().getHits().toString();
-        	seasonTable[i][4] = ts.getBattingStats().getAtBats().toString();
-        	seasonTable[i][5] = DOUBLE_FORMAT.format(ts.getBattingAverage());
-        	seasonTable[i][6] = ts.getBattingStats().getHomeRuns().toString();
+        	seasonTable[i][2] = ts.getWins().toString();
+        	seasonTable[i][3] = ts.getLosses().toString();
+        	seasonTable[i][4] = ts.getRank().toString();
+        	seasonTable[i][5] = ts.getTotalAttendance().toString();
         }
         view.buildTable(seasonTable);
     }
