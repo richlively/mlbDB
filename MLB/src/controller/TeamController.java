@@ -47,6 +47,7 @@ public class TeamController extends BaseController {
         }
         String v = keyVals.get("exact");
         boolean exact = (v != null && v.equalsIgnoreCase("on"));
+        System.out.println(name);
         List<Team> bos = HibernateUtil.retrieveTeamsByName(name, exact);
         view.printSearchResultsMessage(name, exact);
         buildSearchResultsTableTeam(bos);
@@ -58,6 +59,7 @@ public class TeamController extends BaseController {
         if (id == null) {
             return;
         }
+        System.out.println(Integer.valueOf(id));
         Team t = (Team) HibernateUtil.retrieveTeamById(Integer.valueOf(id));
         if (t == null) return;
         buildSearchResultsTableTeamDetail(t);
@@ -80,7 +82,8 @@ public class TeamController extends BaseController {
 
         for (int i = 0; i < bos.size(); i++) {
             Team t = bos.get(i);
-            table[i + 1][0] = t.getId().toString();
+            String tid = t.getId().toString();
+            table[i + 1][0] = view.encodeLink(new String[]{"id"}, new String[]{tid}, tid, ACT_DETAIL, SSP_TEAM);
             table[i + 1][1] = t.getName();
             table[i + 1][2] = t.getLeague();
             table[i + 1][3] = t.getYearFounded().toString();
