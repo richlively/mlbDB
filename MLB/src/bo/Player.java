@@ -201,9 +201,21 @@ public class Player {
 	}
 
 	public void addTeamSeason(TeamSeason ts) {
-		// TODO Auto-generated method stub
-		
+		teamSeasons.add(ts);
 	}
 	
+	public TeamSeason getTeamSeason(Integer year) {
+		for (TeamSeason ts : teamSeasons) {
+			if (ts.getYear().equals(year)) return ts;
+		}
+		return null;
+	}
 	
+	public Set<TeamSeason> getTeamSeasons() {
+		return teamSeasons;
+	}
+	
+	public void setTeamSeasons(Set<TeamSeason> teamSeasons) {
+		this.teamSeasons = teamSeasons;
+	}
 }
