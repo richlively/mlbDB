@@ -143,7 +143,7 @@ public class PlayerSeason implements Serializable {
 		this.gamesPlayed = gamesPlayed;
 	}
 
-	public double getSalary() {
+	public Double getSalary() {
 		return salary;
 	}
 
