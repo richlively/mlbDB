@@ -115,6 +115,7 @@ public class HibernateUtil {
 	@SuppressWarnings("unchecked")
 	public static List<Team> retrieveTeamsByName(String nameQuery, Boolean exactMatch) {
             List<Team> list=null;
+            System.out.println(nameQuery);
             Session session = HibernateUtil.getSessionFactory().openSession();
             Transaction tx = session.getTransaction();
             try {
