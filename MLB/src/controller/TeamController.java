@@ -12,28 +12,29 @@ import dataaccesslayer.HibernateUtil;
 
 public class TeamController extends BaseController {
 
-    @Override
-    public void init(String query) {
-            // TODO Auto-generated method stub
-            System.out.println("building dynamic html for team");
-            view = new TeamView();
-            process(query);
-    }
+	@Override
+	public void init(String query) {
+		System.out.println("building dynamic html for team");
+		view = new TeamView();
+		process(query);
+	}
+	
+	@Override
+	protected void performAction() {
+		String action = keyVals.get("action");
+		System.out.println("teamcontroller performing action: " + action);
+		if (action.equalsIgnoreCase(ACT_SEARCHFORM)) {
+			processSearchForm();
+		} else if (action.equalsIgnoreCase(ACT_SEARCH)) {
+			processSearch();
+		} else if (action.equalsIgnoreCase(ACT_DETAIL)) {
+			processDetails();
+		} else if (action.equalsIgnoreCase(ACT_ROSTER)) {
+			processRoster();
+		}
+	}
 
-    @Override
-    protected void performAction() {
-        String action = keyVals.get("action");
-        System.out.println("playercontroller performing action: " + action);
-        if (action.equalsIgnoreCase(ACT_SEARCHFORM)) {
-            processSearchForm();
-        } else if (action.equalsIgnoreCase(ACT_SEARCH)) {
-            processSearch();
-        } else if (action.equalsIgnoreCase(ACT_DETAIL)) {
-            processDetails();
-        } 
-    }
-
-    protected void processSearchForm() {
+	protected void processSearchForm() {
         view.buildSearchForm();
     }
     
@@ -60,6 +61,11 @@ public class TeamController extends BaseController {
         buildSearchResultsTableTeamDetail(t);
         view.buildLinkToSearch();
     }
+    
+    private void processRoster() {
+		// TODO Auto-generated method stub
+		
+	}
 
     private void buildSearchResultsTableTeam(List<Team> bos) {
         // need a row for the table headers
