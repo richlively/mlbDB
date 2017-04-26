@@ -327,6 +327,7 @@ public class Convert {
 				String teamID = rs.getString("teamID");
 				TeamSeason ts = teamSeasons.get(yid + leagueID + teamID);
 				ts.addPlayer(p);
+				p.addTeamSeason(ts);
 
 				// it is possible to see more than one of these per player if he
 				// switched teams

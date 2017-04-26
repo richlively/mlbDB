@@ -11,6 +11,7 @@ import org.hibernate.cfg.Configuration;
 
 import bo.Player;
 import bo.Team;
+import bo.TeamSeason;
 
 public class HibernateUtil {
 
@@ -110,6 +111,30 @@ public class HibernateUtil {
             }
             return t;
 	}
+	
+	//takes care of retrieving team season
+	public static TeamSeason retrieveTeamSeasonById(Integer tid, Integer yid) {
+        TeamSeason t = null;
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction tx = session.getTransaction();
+        try {
+                tx.begin();
+                org.hibernate.Query query;
+                query = session.createQuery("from bo.TeamSeason where teamId = :id and  ");
+            query.setParameter("id", id);
+            if (query.list().size()>0) {
+                ts = (Team) query.list().get(0);
+                Hibernate.initialize(ts.getPlayers());
+            }
+                tx.commit();
+        } catch (Exception e) {
+                tx.rollback();
+                e.printStackTrace();
+        } finally {
+                if (session.isOpen()) session.close();
+        }
+        return t;
+}
 	
 	
 	@SuppressWarnings("unchecked")

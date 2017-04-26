@@ -73,6 +73,7 @@ public class TeamController extends BaseController {
 			return;
 		}
 		System.out.println("Ids ok");
+		//get a TeamSeason instead
 		Team t = (Team) HibernateUtil.retrieveTeamById(Integer.valueOf(tid));
 		if (t == null) return;
 		System.out.println("Team ok");
