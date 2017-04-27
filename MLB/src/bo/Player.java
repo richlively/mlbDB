@@ -200,10 +200,21 @@ public class Player {
 		return hash;
 	}
 
+	/**
+	 * Adds a team season to the player
+	 * @param ts
+	 */
 	public void addTeamSeason(TeamSeason ts) {
 		teamSeasons.add(ts);
 	}
 	
+	/**
+	 * This returns only the first team season for a given year.
+	 * Use getTeamSeasons(Integer year) to return a Set of team seasons,
+	 * which is helpful for players were multiple teams within a season.
+	 * @param year
+	 * @return the first team season for a given year
+	 */
 	public TeamSeason getTeamSeason(Integer year) {
 		for (TeamSeason ts : teamSeasons) {
 			if (ts.getYear().equals(year)) return ts;
@@ -211,6 +222,25 @@ public class Player {
 		return null;
 	}
 	
+	/**
+	 * This returns a Set of the team seasons a player participated
+	 * in for a given year. If you are only interested in the first
+	 * team season for a given year, use getTeamSeason(Integer year)
+	 * @param year
+	 * @return the set of team seasons for a given year
+	 */
+	public Set<TeamSeason> getTeamSeasons(Integer year) {
+		Set<TeamSeason> seasons = new HashSet<TeamSeason>();
+		for (TeamSeason ts : teamSeasons) {
+			if (ts.getYear().equals(year)) seasons.add(ts);
+		}
+		return seasons;
+	}
+	
+	/**
+	 * 
+	 * @return all the team seasons for a player
+	 */
 	public Set<TeamSeason> getTeamSeasons() {
 		return teamSeasons;
 	}

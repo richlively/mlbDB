@@ -9,6 +9,7 @@ import view.PlayerView;
 import bo.Player;
 import bo.PlayerCareerStats;
 import bo.PlayerSeason;
+import bo.TeamSeason;
 import dataaccesslayer.HibernateUtil;
 
 public class PlayerController extends BaseController {
@@ -125,24 +126,38 @@ public class PlayerController extends BaseController {
         
         view.buildTable(playerTable);
         // now for seasons
-        String[][] seasonTable = new String[seasons.size()+1][7];
+        String[][] seasonTable = new String[seasons.size()+1][8];
         seasonTable[0][0] = "Year";
         seasonTable[0][1] = "Games Played";
         seasonTable[0][2] = "Salary";
-        seasonTable[0][3] = "Hits";
-        seasonTable[0][4] = "At Bats";
-        seasonTable[0][5] = "Batting Average";
-        seasonTable[0][6] = "Home Runs";
+        seasonTable[0][3] = "Team(s)";
+        seasonTable[0][4] = "Hits";
+        seasonTable[0][5] = "At Bats";
+        seasonTable[0][6] = "Batting Average";
+        seasonTable[0][7] = "Home Runs";
         int i = 0;
         for (PlayerSeason ps: list) {
         	i++;
-        	seasonTable[i][0] = ps.getYear().toString();
+        	Integer year = ps.getYear();
+        	seasonTable[i][0] = year.toString();
         	seasonTable[i][1] = ps.getGamesPlayed().toString();
         	seasonTable[i][2] = DOLLAR_FORMAT.format(ps.getSalary());
-        	seasonTable[i][3] = ps.getBattingStats().getHits().toString();
-        	seasonTable[i][4] = ps.getBattingStats().getAtBats().toString();
-        	seasonTable[i][5] = DOUBLE_FORMAT.format(ps.getBattingAverage());
-        	seasonTable[i][6] = ps.getBattingStats().getHomeRuns().toString();
+        	String teams = "";
+        	first = true;
+        	Set<TeamSeason> teamSeasons = p.getTeamSeasons(year);
+        	for (TeamSeason ts : teamSeasons) {
+        		if (first) {
+        			teams += view.encodeLink(new String[] {"id"}, new String[] {ts.getTeam().getId().toString()}, ts.getTeam().getName(), ACT_DETAIL, SSP_TEAM);
+        		}
+        		else {
+        			teams += ", " + view.encodeLink(new String[] {"id"}, new String[] {ts.getTeam().getId().toString()}, ts.getTeam().getName(), ACT_DETAIL, SSP_TEAM);
+        		}
+        	}
+        	seasonTable[i][3] = teams;
+        	seasonTable[i][4] = ps.getBattingStats().getHits().toString();
+        	seasonTable[i][5] = ps.getBattingStats().getAtBats().toString();
+        	seasonTable[i][6] = DOUBLE_FORMAT.format(ps.getBattingAverage());
+        	seasonTable[i][7] = ps.getBattingStats().getHomeRuns().toString();
         }
         view.buildTable(seasonTable);
     }

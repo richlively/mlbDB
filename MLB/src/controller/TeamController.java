@@ -133,10 +133,10 @@ public class TeamController extends BaseController {
             seasonTable[i][0] = view.encodeLink(new String[] {"id"}, new String[] {p.getId().toString()}, p.getName(), ACT_DETAIL, SSP_PLAYER);
             seasonTable[i][1] = ps.getGamesPlayed().toString();
             Double salary = ps.getSalary();
-            seasonTable[i][2] = salary.toString();
+            seasonTable[i][2] = DOLLAR_FORMAT.format(salary);
             totSal += salary;
         }
-        teamTable[1][3] = totSal.toString();
+        teamTable[1][3] = DOLLAR_FORMAT.format(totSal);
         view.buildTable(teamTable);
         view.buildTable(seasonTable);
     }
