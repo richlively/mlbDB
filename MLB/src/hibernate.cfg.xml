@@ -6,7 +6,7 @@
 <hibernate-configuration>
 <session-factory>
 <property name="hibernate.connection.driver_class">com.microsoft.sqlserver.jdbc.SQLServerDriver</property>
-<property name="hibernate.connection.url">jdbc:sqlserver://192.168.133.130:1433;database=MLB</property>
+<property name="hibernate.connection.url">jdbc:sqlserver://163.11.136.9:1433;database=MLB</property>
 <property name="hibernate.connection.username">remote</property>
 <property name="hibernate.connection.password">password</property>
 <property name="hibernate.connection.pool_size">1</property>

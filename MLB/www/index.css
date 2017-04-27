@@ -1,3 +1,105 @@
+/* Main Elements */
+
 * {
-	background-color: yellow;
+    box-sizing: border-box;
+    padding: 0;
+    border: 0;
+    margin: 0;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    background-color:#D4EFDF;
+    height: 100%;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+    text-align: center;
+}
+
+h1, h2 {
+    margin: 20px
+}
+
+nav {
+    margin: 1em 0;
+    width: 100%;
+}
+
+.center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 100%;
+}
+
+input[type="text"] {
+    background-color: rgba(255,255,255,0.0);
+    border-bottom: 2px solid #FA002D;
+    padding: 0 5px;
+}
+
+/* Forms and Buttons */
+
+input[type="submit"], .button {
+    display: inline;
+    padding: 5px 25px;
+    margin: 10px 50px;
+    font-size: 1em;
+    background-color: #FA002D;
+    text-decoration: none;
+    font-weight: bold;
+    color: #092668;
+    border-radius: 5px;    
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+
+input[type="submit"]:hover, .button:hover {
+    cursor: pointer;
+    background-color: #FA0000;
+    color: white;
+}
+
+/* Tables */
+
+table {
+    margin: 20px auto;
+    border-collapse: collapse;
+    overflow-x: auto;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+
+th, td {
+    padding: 5px 10px;
+}
+
+tr {
+    background-color: #2567ff;
+    color: white;    
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+
+tr:nth-child(even) {
+    background-color: #174bc2;
+}
+
+tr:hover {
+    background-color: #092668;
+}
+
+td:hover {
+    background-color: #0d3daa;
+}
+
+th {
+    background-color: #FA002D;
+    color: white;
+}
+
+td a {
+    text-decoration: underline;
+    color: inherit;
 }

@@ -16,8 +16,7 @@ public abstract class BaseView {
     public abstract void buildSearchForm();
     
     public final String buildPage() {
-    	System.out.println("building head");
-        StringBuilder sb = new StringBuilder();
+    	StringBuilder sb = new StringBuilder();
         sb.append("<!DOCTYPE html>\r\n");
         sb.append("<HTML>\r\n");
         sb.append("<HEAD>\r\n");
@@ -27,15 +26,18 @@ public abstract class BaseView {
         sb.append("<link rel='stylesheet' href='index.css'>\r\n");
         sb.append("</HEAD>\r\n");
         sb.append("<BODY>\r\n");
+        sb.append("<DIV class='center'>");
         sb.append("<h2>MLB - ");
         sb.append(title);
         sb.append("</h2>\r\n");
         sb.append(body);
-        sb.append("<br/><br/>\r\n");
-        sb.append("<a href=\"index.htm\">Home</a>\r\n");
+        sb.append("\r\n");
+        sb.append("<NAV>");
+        sb.append("<a href=\"index.htm\" class='button'>Home</a>\r\n");
+        sb.append("</NAV>");
+        sb.append("</DIV>");
         sb.append("</BODY>\r\n");
         sb.append("</HTML>\r\n");
-        System.out.println("the head:\n" + sb.toString());
         return sb.toString();
     }
     
@@ -43,7 +45,7 @@ public abstract class BaseView {
         body.append("<br/><br/>\r\n");
         body.append("<a href=\"");
         body.append(title.toLowerCase());
-        body.append(".ssp?action=searchform\">Search for a ");
+        body.append(".ssp?action=searchform\" class='button'>Search for a ");
         body.append(title);
         body.append("</a>\r\n");  
     }
