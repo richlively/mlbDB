@@ -16,6 +16,7 @@ public abstract class BaseView {
     public abstract void buildSearchForm();
     
     public final String buildPage() {
+    	System.out.println("building head");
         StringBuilder sb = new StringBuilder();
         sb.append("<!DOCTYPE html>\r\n");
         sb.append("<HTML>\r\n");
@@ -34,6 +35,7 @@ public abstract class BaseView {
         sb.append("<a href=\"index.htm\">Home</a>\r\n");
         sb.append("</BODY>\r\n");
         sb.append("</HTML>\r\n");
+        System.out.println("the head:\n" + sb.toString());
         return sb.toString();
     }
     
