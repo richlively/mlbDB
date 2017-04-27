@@ -19,9 +19,12 @@ public abstract class BaseView {
         StringBuilder sb = new StringBuilder();
         sb.append("<!DOCTYPE html>\r\n");
         sb.append("<HTML>\r\n");
-        sb.append("<HEAD><TITLE>");
+        sb.append("<HEAD>\r\n");
+        sb.append("<TITLE>");
         sb.append(title);
-        sb.append("</TITLE></HEAD>\r\n");
+        sb.append("</TITLE>\r\n");
+        sb.append("<link rel='stylesheet' href='index.css'>\r\n");
+        sb.append("</HEAD>\r\n");
         sb.append("<BODY>\r\n");
         sb.append("<h2>MLB - ");
         sb.append(title);
