@@ -144,13 +144,16 @@ public class PlayerController extends BaseController {
         	seasonTable[i][2] = DOLLAR_FORMAT.format(ps.getSalary());
         	String teams = "";
         	first = true;
-        	Set<TeamSeason> teamSeasons = p.getTeamSeasons(year);
+        	Set<TeamSeason> teamSeasons = p.getTeamSeasons();
         	for (TeamSeason ts : teamSeasons) {
-        		if (first) {
-        			teams += view.encodeLink(new String[] {"id"}, new String[] {ts.getTeam().getId().toString()}, ts.getTeam().getName(), ACT_DETAIL, SSP_TEAM);
-        		}
-        		else {
-        			teams += ", " + view.encodeLink(new String[] {"id"}, new String[] {ts.getTeam().getId().toString()}, ts.getTeam().getName(), ACT_DETAIL, SSP_TEAM);
+        		if (ts.getYear().equals(year)){
+	        		if (first) {
+	        			teams += view.encodeLink(new String[] {"tid"}, new String[] {ts.getTeam().getId().toString()}, ts.getTeam().getName(), ACT_DETAIL, SSP_TEAM);
+	        			first = false;
+	        		}
+	        		else {
+	        			teams += ", " + view.encodeLink(new String[] {"tid"}, new String[] {ts.getTeam().getId().toString()}, ts.getTeam().getName(), ACT_DETAIL, SSP_TEAM);
+	        		}
         		}
         	}
         	seasonTable[i][3] = teams;

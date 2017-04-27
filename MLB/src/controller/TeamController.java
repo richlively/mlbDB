@@ -173,7 +173,7 @@ public class TeamController extends BaseController {
         	i++;
         	seasonTable[i][0] = ts.getYear().toString();
         	seasonTable[i][1] = ts.getGamesPlayed().toString();
-        	seasonTable[i][1] = view.encodeLink(new String[] {"tid", "yid"}, new String[] {ts.getTeam().getId().toString(), ts.getYear().toString()} , "Roster", ACT_ROSTER, SSP_TEAM);
+        	seasonTable[i][2] = view.encodeLink(new String[] {"tid", "yid"}, new String[] {ts.getTeam().getId().toString(), ts.getYear().toString()} , "Roster", ACT_ROSTER, SSP_TEAM);
         	seasonTable[i][3] = ts.getWins().toString();
         	seasonTable[i][4] = ts.getLosses().toString();
         	seasonTable[i][5] = ts.getRank().toString();

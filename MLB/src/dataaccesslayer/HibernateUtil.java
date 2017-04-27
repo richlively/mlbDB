@@ -52,6 +52,7 @@ public class HibernateUtil {
 		    if (query.list().size()>0) {
 		    	p = (Player) query.list().get(0);
 		    	Hibernate.initialize(p.getSeasons());
+		    	Hibernate.initialize(p.getTeamSeasons());
 		    }
 			tx.commit();
 		} catch (Exception e) {
